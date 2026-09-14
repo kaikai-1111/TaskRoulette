@@ -29,8 +29,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      {/* Browser extensions (Grammarly, password managers, etc.) commonly
+          inject attributes into <body> before React hydrates, which trips
+          React's hydration-mismatch warning even though nothing is actually
+          broken — suppressed here per React's own guidance for this case. */}
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <Script id="theme-init" strategy="beforeInteractive">
           {THEME_INIT_SCRIPT}
         </Script>
