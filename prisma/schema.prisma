@@ -1,0 +1,166 @@
+// v1 data model for the crowdsourced task platform.
+// Postgres (Neon in prod; a Neon branch or any local/dev Postgres also works
+// for local dev — see README for setup, since Prisma can't target SQLite and
+// Postgres from one schema).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TemplateType {
+  BOUNDING_BOX
+  POINT
+  LABELING
+  FREEFORM_DRAWING
+  VIDEO_RECORDING
+}
+
+enum ChallengeCategory {
+  FUN
+  PRETRAINING
+}
+
+enum ChallengeStatus {
+  ACTIVE
+  COMPLETED
+  FLAGGED
+  REMOVED
+}
+
+enum SubmissionStatus {
+  APPROVED
+  FLAGGED
+  REMOVED
+}
+
+enum CreditReason {
+  SIGNUP_BONUS
+  EARN_SUBMISSION
+  SPEND_CHALLENGE_POST
+  REFUND_UNUSED_ITEMS
+  ADMIN_ADJUST
+}
+
+enum FlagTargetType {
+  CHALLENGE
+  SUBMISSION
+}
+
+// A visitor's identity. Created anonymously on first visit (device-id cookie);
+// email/displayName are filled in later if/when they choose to "claim" the account.
+model User {
+  id          String   @id @default(cuid())
+  anonToken   String   @unique // opaque id stored in an httpOnly cookie
+  displayName String?
+  credits     Int      @default(20)
+  createdAt   DateTime @default(now())
+
+  // "Claim your account" (recovery-code based, no email verification in v1):
+  // set together when claimed. recoveryCodeHash is a sha256 of the one-time
+  // code shown to the user; the plaintext code is never stored.
+  email            String? @unique
+  recoveryCodeHash String?
+
+  // Self-attested age/ToS gate, shown once before first use of the app.
+  ageAttested Boolean @default(false)
+
+  challenges  Challenge[]
+  submissions Submission[]
+  transactions CreditTransaction[]
+  flags       Flag[]
+}
+
+// A posted challenge: a template type + creator-supplied config, applied over
+// one or more items, each of which needs `targetResponsesPerItem` submissions.
+model Challenge {
+  id                     String            @id @default(cuid())
+  creatorId              String
+  creator                User              @relation(fields: [creatorId], references: [id])
+  templateType           TemplateType
+  category               ChallengeCategory @default(FUN)
+  prompt                 String // instruction shown to the doer, e.g. "draw a box around the cat"
+  config                 String // JSON blob, shape depends on templateType (see lib/templates)
+  timeLimitSeconds       Int               @default(30)
+  targetResponsesPerItem Int               @default(10)
+  creditCostPerResponse  Int               @default(1)
+  status                 ChallengeStatus   @default(ACTIVE)
+  createdAt              DateTime          @default(now())
+
+  items       ChallengeItem[]
+  submissions Submission[]
+  flags       Flag[]
+
+  @@index([status, templateType])
+}
+
+// One presentable unit within a challenge (one image to box, one snippet to label, ...).
+// Simple single-prompt challenges (no media set) still get exactly one auto-created item.
+model ChallengeItem {
+  id            String   @id @default(cuid())
+  challengeId   String
+  challenge     Challenge @relation(fields: [challengeId], references: [id])
+  order         Int       @default(0)
+  mediaUrl      String?
+  textContent   String?
+  responseCount Int       @default(0) // denormalized, incremented per submission
+
+  submissions Submission[]
+
+  @@index([challengeId])
+}
+
+// One doer's answer to one item.
+model Submission {
+  id            String           @id @default(cuid())
+  challengeId   String
+  challenge     Challenge        @relation(fields: [challengeId], references: [id])
+  itemId        String
+  item          ChallengeItem    @relation(fields: [itemId], references: [id])
+  submitterId   String
+  submitter     User             @relation(fields: [submitterId], references: [id])
+  answer        String // JSON blob, shape depends on Challenge.templateType (see lib/templates)
+  status        SubmissionStatus @default(APPROVED)
+  timeTakenMs   Int
+  createdAt     DateTime         @default(now())
+
+  flags Flag[]
+
+  @@unique([itemId, submitterId]) // one answer per doer per item
+  @@index([challengeId])
+}
+
+// Append-only ledger; User.credits is a denormalized running balance kept in sync with this.
+model CreditTransaction {
+  id                 String       @id @default(cuid())
+  userId             String
+  user               User         @relation(fields: [userId], references: [id])
+  amount             Int // positive = earn, negative = spend
+  reason             CreditReason
+  relatedChallengeId String?
+  createdAt          DateTime     @default(now())
+
+  @@index([userId])
+}
+
+// Moderation report on a challenge or submission. Present from day one per spec,
+// even though v1 review tooling is minimal (see /admin).
+model Flag {
+  id           String         @id @default(cuid())
+  targetType   FlagTargetType
+  challengeId  String?
+  challenge    Challenge?     @relation(fields: [challengeId], references: [id])
+  submissionId String?
+  submission   Submission?    @relation(fields: [submissionId], references: [id])
+  reporterId   String
+  reporter     User           @relation(fields: [reporterId], references: [id])
+  reason       String
+  resolved     Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+
+  @@index([resolved])
+}
