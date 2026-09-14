@@ -89,7 +89,7 @@ export default function BoundingBoxCapture({ item, onSubmit }: CaptureProps) {
         )}
         {rect && (
           <div
-            className="absolute border-2 border-emerald-400 bg-emerald-400/20 pointer-events-none"
+            className="absolute border-2 border-orange-500 bg-orange-500/20 pointer-events-none"
             style={{ left: rect.x, top: rect.y, width: rect.width, height: rect.height }}
           />
         )}
@@ -97,7 +97,7 @@ export default function BoundingBoxCapture({ item, onSubmit }: CaptureProps) {
       <button
         onClick={submit}
         disabled={!canSubmit}
-        className="w-full max-w-xs rounded-full bg-emerald-500 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
+        className="w-full max-w-xs rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
       >
         Submit box
       </button>

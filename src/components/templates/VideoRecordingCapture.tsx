@@ -151,7 +151,7 @@ export default function VideoRecordingCapture({ item, onSubmit }: CaptureProps) 
         </div>
         <button
           onClick={startRecording}
-          className="w-full rounded-full bg-emerald-500 px-6 py-3 font-semibold text-white active:scale-95 transition"
+          className="w-full rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-3 font-semibold text-white active:scale-95 transition"
         >
           Allow camera &amp; record
         </button>
@@ -183,7 +183,7 @@ export default function VideoRecordingCapture({ item, onSubmit }: CaptureProps) 
         </div>
         <button
           onClick={stopNow}
-          className="w-full rounded-full bg-black dark:bg-white text-white dark:text-black px-6 py-3 font-semibold active:scale-95 transition"
+          className="w-full rounded-full bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 font-semibold active:scale-95 transition"
         >
           Stop now
         </button>
@@ -210,7 +210,7 @@ export default function VideoRecordingCapture({ item, onSubmit }: CaptureProps) 
           <button
             onClick={submit}
             disabled={stage === "uploading"}
-            className="flex-1 rounded-full bg-emerald-500 px-4 py-3 font-semibold text-white disabled:opacity-30 active:scale-95 transition"
+            className="flex-1 rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-3 font-semibold text-white disabled:opacity-30 active:scale-95 transition"
           >
             {stage === "uploading" ? "Uploading…" : "Submit"}
           </button>

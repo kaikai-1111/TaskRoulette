@@ -53,7 +53,7 @@ export default function PointCapture({ item, onSubmit }: CaptureProps) {
         )}
         {point && (
           <div
-            className="absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-emerald-400 bg-emerald-400/40 pointer-events-none"
+            className="absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-orange-500 bg-orange-500/40 pointer-events-none"
             style={{ left: point.x, top: point.y }}
           />
         )}
@@ -61,7 +61,7 @@ export default function PointCapture({ item, onSubmit }: CaptureProps) {
       <button
         onClick={submit}
         disabled={!point}
-        className="w-full max-w-xs rounded-full bg-emerald-500 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
+        className="w-full max-w-xs rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
       >
         Submit tap
       </button>

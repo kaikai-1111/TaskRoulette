@@ -4,7 +4,7 @@ import { isAdmin } from "@/lib/admin";
 import { getAllChallenges, setChallengeStatusAction } from "@/app/admin/actions";
 
 const STATUS_STYLES: Record<string, string> = {
-  ACTIVE: "bg-emerald-400/20 text-emerald-500",
+  ACTIVE: "bg-blue-400/20 text-blue-600 dark:text-blue-400",
   COMPLETED: "bg-black/10 dark:bg-white/10",
   FLAGGED: "bg-amber-400/20 text-amber-600",
   REMOVED: "bg-red-500/10 text-red-500",
@@ -63,7 +63,7 @@ export default async function AdminChallengesPage() {
                   </Link>
                   {c.status === "REMOVED" ? (
                     <form action={setChallengeStatusAction.bind(null, c.id, "ACTIVE")}>
-                      <button className="rounded-full border border-emerald-500/30 text-emerald-500 px-3 py-1.5 hover:bg-emerald-500/10">
+                      <button className="rounded-full border border-blue-500/30 text-blue-600 dark:text-blue-400 px-3 py-1.5 hover:bg-blue-500/10">
                         Reactivate
                       </button>
                     </form>

@@ -3,7 +3,7 @@ export default function TermsPage() {
     <div className="mx-auto w-full max-w-lg px-4 py-8 text-sm leading-relaxed">
       <h1 className="text-2xl font-bold mb-4">Terms, in short</h1>
       <p className="mb-4">
-        quicktask is a public feed of quick, informal tasks posted by other users. Anyone can post a
+        Task Roulette is a public feed of quick, informal tasks posted by other users. Anyone can post a
         challenge and anyone can answer one — there&apos;s no vetting of prompts or images beyond
         the flag/review process described below.
       </p>

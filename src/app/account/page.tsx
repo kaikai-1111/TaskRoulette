@@ -48,7 +48,7 @@ export default function AccountPage() {
           <p className="text-sm">
             Save this recovery code somewhere safe — it&apos;s shown{" "}
             <span className="font-semibold">only once</span>. Use it with your email on{" "}
-            <Link href="/restore" className="text-emerald-500 underline">
+            <Link href="/restore" className="text-blue-600 dark:text-blue-400 underline">
               /restore
             </Link>{" "}
             to bring your credits to another device.
@@ -69,7 +69,7 @@ export default function AccountPage() {
           </p>
           <button
             onClick={() => setShowForm(true)}
-            className="self-start text-sm text-emerald-500 underline"
+            className="self-start text-sm text-blue-600 dark:text-blue-400 underline"
           >
             Generate a new recovery code
           </button>
@@ -92,7 +92,7 @@ export default function AccountPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-full bg-emerald-500 px-6 py-2.5 font-semibold text-white disabled:opacity-40"
+            className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-2.5 font-semibold text-white disabled:opacity-40"
           >
             {submitting ? "Claiming…" : email ? "Generate new code" : "Claim account"}
           </button>

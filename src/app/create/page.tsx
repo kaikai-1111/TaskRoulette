@@ -129,7 +129,7 @@ export default function CreatePage() {
                 onClick={() => setTemplateType(t.value)}
                 className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
                   templateType === t.value
-                    ? "border-emerald-400 bg-emerald-400/10"
+                    ? "border-blue-500 bg-blue-500/10"
                     : "border-black/10 dark:border-white/15"
                 }`}
               >
@@ -221,7 +221,7 @@ export default function CreatePage() {
                 type="button"
                 onClick={() => setMediaMode("image")}
                 className={`rounded-full px-3 py-1 border ${
-                  mediaMode === "image" ? "border-emerald-400 bg-emerald-400/10" : "border-black/10 dark:border-white/15"
+                  mediaMode === "image" ? "border-blue-500 bg-blue-500/10" : "border-black/10 dark:border-white/15"
                 }`}
               >
                 Images
@@ -230,7 +230,7 @@ export default function CreatePage() {
                 type="button"
                 onClick={() => setMediaMode("text")}
                 className={`rounded-full px-3 py-1 border ${
-                  mediaMode === "text" ? "border-emerald-400 bg-emerald-400/10" : "border-black/10 dark:border-white/15"
+                  mediaMode === "text" ? "border-blue-500 bg-blue-500/10" : "border-black/10 dark:border-white/15"
                 }`}
               >
                 Text snippets
@@ -301,7 +301,7 @@ export default function CreatePage() {
         <button
           type="submit"
           disabled={submitting || items.length === 0 || !canAfford}
-          className="rounded-full bg-emerald-500 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
+          className="rounded-full bg-orange-500 hover:bg-orange-600 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
         >
           {submitting ? "Posting…" : `Post for ${totalCost} credits`}
         </button>

@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-full bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 font-semibold disabled:opacity-40"
+          className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white px-6 py-2.5 font-semibold disabled:opacity-40"
         >
           {pending ? "Checking…" : "Log in"}
         </button>

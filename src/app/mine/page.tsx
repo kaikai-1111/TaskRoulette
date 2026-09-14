@@ -10,7 +10,7 @@ export default async function MyChallengesPage() {
       {challenges.length === 0 ? (
         <p className="text-black/50 dark:text-white/50">
           You haven&apos;t posted anything yet.{" "}
-          <Link href="/create" className="text-emerald-500 underline">
+          <Link href="/create" className="text-blue-600 dark:text-blue-400 underline">
             Post your first challenge
           </Link>
           .
@@ -30,7 +30,7 @@ export default async function MyChallengesPage() {
                     <span
                       className={`text-xs rounded-full px-2 py-0.5 ${
                         c.status === "COMPLETED"
-                          ? "bg-emerald-400/20 text-emerald-500"
+                          ? "bg-blue-400/20 text-blue-600 dark:text-blue-400"
                           : "bg-black/10 dark:bg-white/10"
                       }`}
                     >

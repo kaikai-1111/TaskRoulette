@@ -53,7 +53,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
       <button
         onClick={handleContinue}
         disabled={!checked || submitting}
-        className="rounded-full bg-emerald-500 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
+        className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
       >
         {submitting ? "…" : "Continue"}
       </button>

@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "quicktask",
+      "name": "task-roulette",
       "runtimeExecutable": "bash",
       "runtimeArgs": ["-c", "export PATH=\"$(pwd)/.node/bin:$PATH\" && npm run dev"],
       "port": 3000

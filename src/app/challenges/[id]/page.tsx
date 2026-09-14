@@ -22,7 +22,7 @@ export default async function ChallengeResultsPage({
         <span
           className={`shrink-0 text-xs rounded-full px-2 py-1 ${
             challenge.status === "COMPLETED"
-              ? "bg-emerald-400/20 text-emerald-500"
+              ? "bg-blue-400/20 text-blue-600 dark:text-blue-400"
               : "bg-black/10 dark:bg-white/10"
           }`}
         >
@@ -36,7 +36,7 @@ export default async function ChallengeResultsPage({
 
       <a
         href={`/api/challenges/${challenge.id}/export`}
-        className="inline-block mb-6 rounded-full bg-black dark:bg-white text-white dark:text-black px-5 py-2.5 text-sm font-semibold active:scale-95 transition"
+        className="inline-block mb-6 rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white px-5 py-2.5 text-sm font-semibold active:scale-95 transition"
       >
         Export JSON
       </a>

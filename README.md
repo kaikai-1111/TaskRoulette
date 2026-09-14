@@ -1,4 +1,4 @@
-# quicktask
+# Task Roulette
 
 A public feed of quick, absurd challenges — bounding boxes, taps, labels, drawings,
 short video clips — completed by random visitors in ~30 seconds. Posting a challenge

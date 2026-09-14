@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (`.dark` on <html>) instead of only following the OS
+   preference, so the theme toggle can actually override it. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0f172a;
 }
 
 @theme inline {
@@ -12,15 +16,32 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* System preference is the default for a visitor with no saved choice. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not(.light) {
+    --background: #0a1120;
+    --foreground: #e2e8f0;
   }
+}
+
+/* Explicit toggle wins in both directions. */
+:root.dark {
+  --background: #0a1120;
+  --foreground: #e2e8f0;
+}
+:root.light {
+  --background: #ffffff;
+  --foreground: #0f172a;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    var(--font-sans),
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    system-ui,
+    sans-serif;
 }

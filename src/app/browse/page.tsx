@@ -5,10 +5,10 @@ import { TEMPLATE_TYPES } from "@/lib/templates/types";
 const TEMPLATE_LABELS = Object.fromEntries(TEMPLATE_TYPES.map((t) => [t.value, t.label.toLowerCase()]));
 
 const CARD_GRADIENTS = [
-  "from-emerald-400/30 to-cyan-400/30",
-  "from-fuchsia-400/30 to-orange-400/30",
-  "from-indigo-400/30 to-emerald-400/30",
-  "from-amber-400/30 to-pink-400/30",
+  "from-blue-400/30 to-orange-300/30",
+  "from-orange-400/30 to-blue-300/30",
+  "from-sky-400/30 to-orange-400/30",
+  "from-blue-500/25 to-amber-400/30",
 ];
 
 export default async function BrowsePage() {
@@ -24,7 +24,7 @@ export default async function BrowsePage() {
       {challenges.length === 0 ? (
         <p className="text-black/50 dark:text-white/50">
           Nothing open yet.{" "}
-          <Link href="/create" className="text-emerald-500 underline">
+          <Link href="/create" className="text-blue-600 dark:text-blue-400 underline">
             Post the first challenge
           </Link>
           .
@@ -60,7 +60,7 @@ export default async function BrowsePage() {
                     {TEMPLATE_LABELS[c.templateType]}
                   </span>
                   {c.isMine && (
-                    <span className="absolute top-1.5 right-1.5 rounded-full bg-emerald-500 text-white text-[10px] px-2 py-0.5">
+                    <span className="absolute top-1.5 right-1.5 rounded-full bg-orange-500 text-white text-[10px] px-2 py-0.5">
                       yours
                     </span>
                   )}
@@ -68,7 +68,7 @@ export default async function BrowsePage() {
                 <div className="p-2.5">
                   <p className="text-sm font-medium truncate">{c.prompt}</p>
                   <div className="mt-1.5 h-1 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
-                    <div className="h-full bg-emerald-400" style={{ width: `${pct}%` }} />
+                    <div className="h-full bg-blue-500" style={{ width: `${pct}%` }} />
                   </div>
                   <p className="mt-1 text-[11px] text-black/40 dark:text-white/40">
                     {c.responseCount} / {c.totalTarget} responses

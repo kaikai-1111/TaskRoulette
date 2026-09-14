@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import NavHeader from "@/components/NavHeader";
 import AgeGate from "@/components/AgeGate";
 import "./globals.css";
@@ -15,9 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "quicktask",
+  title: "Task Roulette",
   description: "Quick, weird 30-second tasks for AI training data.",
 };
+
+// Runs before paint so a saved theme choice applies immediately, instead of
+// flashing the system-default theme first and then swapping.
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.classList.add(t);}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,6 +31,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
         <NavHeader />
         <main className="flex flex-1 flex-col">
           <AgeGate>{children}</AgeGate>

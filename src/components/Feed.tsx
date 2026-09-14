@@ -119,14 +119,14 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
         {targeted && (
           <button
             onClick={loadNext}
-            className="rounded-full bg-black dark:bg-white text-white dark:text-black px-6 py-3 font-semibold active:scale-95 transition"
+            className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white px-6 py-3 font-semibold active:scale-95 transition"
           >
             Browse the feed instead
           </button>
         )}
         <a
           href="/create"
-          className="rounded-full bg-emerald-500 px-6 py-3 font-semibold text-white active:scale-95 transition"
+          className="rounded-full bg-orange-500 hover:bg-orange-600 px-6 py-3 font-semibold text-white active:scale-95 transition"
         >
           Post a challenge
         </a>
@@ -144,10 +144,10 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
           You&apos;re response #{feedback.itemResponseCount} of {feedback.targetResponsesPerItem} on this one ({pct}%
           full)
         </p>
-        {streak > 1 && <p className="text-sm text-emerald-500 font-medium">🔥 {streak} in a row</p>}
+        {streak > 1 && <p className="text-sm text-orange-500 font-medium">🔥 {streak} in a row</p>}
         <button
           onClick={loadNext}
-          className="mt-2 rounded-full bg-black dark:bg-white text-white dark:text-black px-6 py-3 font-semibold active:scale-95 transition"
+          className="mt-2 rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white px-6 py-3 font-semibold active:scale-95 transition"
         >
           Next
         </button>
@@ -173,7 +173,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
         <div className="flex items-center gap-3">
           <span className="text-black/40 dark:text-white/40">{credits ?? "…"} credits</span>
           {reportSent ? (
-            <span className="text-xs text-emerald-500">Reported</span>
+            <span className="text-xs text-blue-600 dark:text-blue-400">Reported</span>
           ) : (
             <button
               onClick={() => setReporting((r) => !r)}
@@ -207,7 +207,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
       {item.templateType !== "VIDEO_RECORDING" && (
         <div className="h-1 w-full bg-black/5 dark:bg-white/10">
           <div
-            className="h-full bg-emerald-400 transition-[width] duration-1000 ease-linear"
+            className="h-full bg-blue-500 transition-[width] duration-1000 ease-linear"
             style={{ width: `${(timeLeft / item.timeLimitSeconds) * 100}%` }}
           />
         </div>
