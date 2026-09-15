@@ -65,7 +65,7 @@ export default function CreatePage() {
     [itemsRaw]
   );
 
-  const totalCost = items.length * targetResponsesPerItem * ECONOMY.CREDIT_COST_PER_RESPONSE;
+  const totalCost = ECONOMY.CHALLENGE_POST_COST;
   const canAfford = credits === null || credits >= totalCost;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -114,8 +114,8 @@ export default function CreatePage() {
     <div className="mx-auto w-full max-w-lg px-4 py-8">
       <h1 className="text-2xl font-bold mb-1">Post a challenge</h1>
       <p className="text-sm text-black/50 dark:text-white/50 mb-6">
-        {credits === null ? "…" : `You have ${credits} credits.`} Posting costs{" "}
-        {ECONOMY.CREDIT_COST_PER_RESPONSE} credit per response requested, per item.
+        {credits === null ? "…" : `You have ${credits} credits.`} Posting a challenge costs a flat{" "}
+        {ECONOMY.CHALLENGE_POST_COST} credits, no matter how many items or responses you ask for.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">

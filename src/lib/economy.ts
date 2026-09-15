@@ -3,11 +3,16 @@
 export const ECONOMY = {
   STARTING_CREDITS: 20,
   CREDITS_PER_SUBMISSION: 1,
-  CREDIT_COST_PER_RESPONSE: 1,
+  // Flat per-challenge posting cost, independent of item count or target
+  // responses per item — simple and predictable regardless of dataset size.
+  CHALLENGE_POST_COST: 5,
   DEFAULT_TARGET_RESPONSES_PER_ITEM: 10,
   DEFAULT_TIME_LIMIT_SECONDS: 30,
   MIN_TARGET_RESPONSES_PER_ITEM: 1,
-  MAX_TARGET_RESPONSES_PER_ITEM: 500,
+  // Raised well past a typical "small dataset" cap on purpose — the flat
+  // posting cost means a creator should be able to ask for mass responses
+  // (tens of thousands) on a single item without hitting an arbitrary wall.
+  MAX_TARGET_RESPONSES_PER_ITEM: 50_000,
 
   // Video/webcam recording (deferred in the original spec, now scoped in):
   // hard-capped short so hosting cost and privacy exposure stay bounded.

@@ -295,8 +295,7 @@ export async function createChallenge(
     throw err;
   }
 
-  const totalCost =
-    input.items.length * input.targetResponsesPerItem * ECONOMY.CREDIT_COST_PER_RESPONSE;
+  const totalCost = ECONOMY.CHALLENGE_POST_COST;
 
   try {
     const challenge = await prisma.$transaction(async (tx) => {
@@ -316,7 +315,6 @@ export async function createChallenge(
           config: JSON.stringify(config),
           timeLimitSeconds: input.timeLimitSeconds,
           targetResponsesPerItem: input.targetResponsesPerItem,
-          creditCostPerResponse: ECONOMY.CREDIT_COST_PER_RESPONSE,
           items: {
             create: input.items.map((item, order) => ({
               order,

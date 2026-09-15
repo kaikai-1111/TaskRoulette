@@ -87,7 +87,6 @@ model Challenge {
   config                 String // JSON blob, shape depends on templateType (see lib/templates)
   timeLimitSeconds       Int               @default(30)
   targetResponsesPerItem Int               @default(10)
-  creditCostPerResponse  Int               @default(1)
   status                 ChallengeStatus   @default(ACTIVE)
   createdAt              DateTime          @default(now())
 
