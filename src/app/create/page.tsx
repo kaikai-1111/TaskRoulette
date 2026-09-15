@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createChallenge, getMyCredits } from "@/app/actions";
+import { createChallenge } from "@/app/actions";
 import { ECONOMY } from "@/lib/economy";
 import { TEMPLATE_TYPES, type TemplateType } from "@/lib/templates/types";
+import { useCredits } from "@/components/CreditsProvider";
 
 const NEEDS_TARGET_LABEL: TemplateType[] = ["BOUNDING_BOX", "POINT"];
 
@@ -45,13 +46,9 @@ export default function CreatePage() {
     ECONOMY.DEFAULT_TARGET_RESPONSES_PER_ITEM
   );
   const [timeLimitSeconds, setTimeLimitSeconds] = useState<number>(ECONOMY.DEFAULT_TIME_LIMIT_SECONDS);
-  const [credits, setCredits] = useState<number | null>(null);
+  const { credits, adjust } = useCredits();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    getMyCredits().then(setCredits);
-  }, []);
 
   const usesImageItems =
     templateType === "BOUNDING_BOX" || templateType === "POINT" || (templateType === "LABELING" && mediaMode === "image");
@@ -105,6 +102,7 @@ export default function CreatePage() {
       setError(result.error);
       return;
     }
+    adjust(-totalCost);
     router.push(`/challenges/${result.challengeId}`);
   }
 

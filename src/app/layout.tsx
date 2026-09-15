@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import NavHeader from "@/components/NavHeader";
 import AgeGate from "@/components/AgeGate";
+import { CreditsProvider } from "@/components/CreditsProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,10 +40,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script id="theme-init" strategy="beforeInteractive">
           {THEME_INIT_SCRIPT}
         </Script>
-        <NavHeader />
-        <main className="flex flex-1 flex-col">
-          <AgeGate>{children}</AgeGate>
-        </main>
+        <CreditsProvider>
+          <NavHeader />
+          <main className="flex flex-1 flex-col">
+            <AgeGate>{children}</AgeGate>
+          </main>
+        </CreditsProvider>
       </body>
     </html>
   );

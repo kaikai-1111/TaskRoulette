@@ -1,7 +1,7 @@
 // All the tunable numbers for the credit economy live here so they're easy to
 // rebalance without hunting through server actions.
 export const ECONOMY = {
-  STARTING_CREDITS: 20,
+  STARTING_CREDITS: 100,
   CREDITS_PER_SUBMISSION: 1,
   // Flat per-challenge posting cost, independent of item count or target
   // responses per item — simple and predictable regardless of dataset size.

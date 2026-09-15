@@ -1,15 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  flagContent,
-  getFeedItemForChallenge,
-  getMyCredits,
-  getNextFeedItem,
-  submitAnswer,
-} from "@/app/actions";
+import { flagContent, getFeedItemForChallenge, getNextFeedItem, submitAnswer } from "@/app/actions";
 import type { FeedItem } from "@/lib/templates/types";
 import { CAPTURE_COMPONENTS } from "@/components/templates/registry";
+import { useCredits } from "@/components/CreditsProvider";
 
 type Feedback = {
   creditsEarned: number;
@@ -19,7 +14,7 @@ type Feedback = {
 
 export default function Feed({ initialChallengeId }: { initialChallengeId?: string }) {
   const [item, setItem] = useState<FeedItem | null | undefined>(undefined); // undefined = loading
-  const [credits, setCredits] = useState<number | null>(null);
+  const { adjust } = useCredits();
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
@@ -54,7 +49,6 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
       setTimeLeft(next?.timeLimitSeconds ?? 0);
     }
     loadFirst();
-    getMyCredits().then(setCredits);
     // Only the very first load should target a specific challenge — Next/Skip
     // after that fall back to the normal random feed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -94,7 +88,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
       targetResponsesPerItem: result.targetResponsesPerItem,
     });
     setStreak((s) => s + 1);
-    setCredits((c) => (c ?? 0) + result.creditsEarned);
+    adjust(result.creditsEarned);
   }
 
   if (item === undefined) {
@@ -171,7 +165,6 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
           {item.templateType === "VIDEO_RECORDING" ? "" : `${timeLeft}s`}
         </span>
         <div className="flex items-center gap-3">
-          <span className="text-black/40 dark:text-white/40">{credits ?? "…"} credits</span>
           {reportSent ? (
             <span className="text-xs text-blue-600 dark:text-blue-400">Reported</span>
           ) : (
