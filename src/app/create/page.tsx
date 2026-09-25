@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createChallenge } from "@/app/actions";
+import { getAccountStatus } from "@/app/account/actions";
 import { ECONOMY } from "@/lib/economy";
 import { TEMPLATE_TYPES, type TemplateType } from "@/lib/templates/types";
 import { useCredits } from "@/components/CreditsProvider";
+import CreateAccountForm from "@/components/CreateAccountForm";
 
 const NEEDS_TARGET_LABEL: TemplateType[] = ["BOUNDING_BOX", "POINT"];
 
@@ -50,6 +52,11 @@ export default function CreatePage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [hasAccount, setHasAccount] = useState<boolean | null>(null); // null = loading
+
+  useEffect(() => {
+    getAccountStatus().then((s) => setHasAccount(s.hasAccount));
+  }, []);
 
   const usesImageItems =
     templateType === "BOUNDING_BOX" || templateType === "POINT" || (templateType === "LABELING" && mediaMode === "image");
@@ -101,6 +108,7 @@ export default function CreatePage() {
 
     if (!result.ok) {
       setError(result.error);
+      if (result.needsAccount) setHasAccount(false);
       return;
     }
     adjust(-totalCost);
@@ -137,6 +145,23 @@ export default function CreatePage() {
   }
 
   const itemsCopy = ITEMS_COPY[templateType];
+
+  if (hasAccount === null) {
+    return <div className="mx-auto w-full max-w-lg px-4 py-8 text-black/40 dark:text-white/40">Loading…</div>;
+  }
+
+  if (!hasAccount) {
+    return (
+      <div className="mx-auto w-full max-w-sm px-4 py-8">
+        <h1 className="text-2xl font-bold mb-1">Create an account to post</h1>
+        <p className="text-sm text-black/50 dark:text-white/50 mb-6">
+          Doing challenges never requires this — only posting one does, so there&apos;s a real
+          identity behind the data you collect.
+        </p>
+        <CreateAccountForm continueLabel="Continue to post" onCreated={() => setHasAccount(true)} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-lg px-4 py-8">

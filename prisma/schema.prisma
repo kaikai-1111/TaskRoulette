@@ -52,7 +52,8 @@ enum FlagTargetType {
 }
 
 // A visitor's identity. Created anonymously on first visit (device-id cookie);
-// email/displayName are filled in later if/when they choose to "claim" the account.
+// username/email/displayName are filled in later if/when they create an
+// account (required to post a challenge, never required to do one).
 model User {
   id          String   @id @default(cuid())
   anonToken   String   @unique // opaque id stored in an httpOnly cookie
@@ -60,9 +61,12 @@ model User {
   credits     Int      @default(20)
   createdAt   DateTime @default(now())
 
-  // "Claim your account" (recovery-code based, no email verification in v1):
-  // set together when claimed. recoveryCodeHash is a sha256 of the one-time
-  // code shown to the user; the plaintext code is never stored.
+  // "Create an account" (recovery-code based, no password/email verification
+  // in v1): username, email and recoveryCodeHash are all set together at
+  // creation. recoveryCodeHash is a sha256 of the one-time code shown to the
+  // user; the plaintext code is never stored. Posting a challenge requires
+  // all three to be set — doing challenges never does.
+  username         String? @unique
   email            String? @unique
   recoveryCodeHash String?
 

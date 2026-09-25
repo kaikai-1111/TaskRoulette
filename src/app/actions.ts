@@ -272,8 +272,16 @@ export interface CreateChallengeInput {
 
 export async function createChallenge(
   input: CreateChallengeInput
-): Promise<{ ok: true; challengeId: string } | { ok: false; error: string }> {
+): Promise<
+  { ok: true; challengeId: string } | { ok: false; error: string; needsAccount?: true }
+> {
   const user = await getCurrentUser();
+
+  // Doing challenges never requires an account — posting one does, so
+  // there's a real identity behind exported/creator-facing data.
+  if (!user.email || !user.username) {
+    return { ok: false, needsAccount: true, error: "Create an account to post a challenge." };
+  }
 
   if (!input.prompt.trim()) return { ok: false, error: "Give the challenge a prompt." };
   if (input.items.length === 0) return { ok: false, error: "Add at least one item." };
