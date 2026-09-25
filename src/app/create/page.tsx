@@ -49,6 +49,7 @@ export default function CreatePage() {
   const { credits, adjust } = useCredits();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const usesImageItems =
     templateType === "BOUNDING_BOX" || templateType === "POINT" || (templateType === "LABELING" && mediaMode === "image");
@@ -104,6 +105,35 @@ export default function CreatePage() {
     }
     adjust(-totalCost);
     router.push(`/challenges/${result.challengeId}`);
+  }
+
+  async function handleFilesSelected(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setError(null);
+    setUploading(true);
+    const urls: string[] = [];
+    const failures: string[] = [];
+    for (const file of Array.from(files)) {
+      try {
+        const res = await fetch("/api/uploads/image", {
+          method: "POST",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error ?? "Upload failed");
+        urls.push(body.url);
+      } catch {
+        failures.push(file.name);
+      }
+    }
+    setUploading(false);
+    if (urls.length > 0) {
+      setItemsRaw((prev) => (prev.trim() ? `${prev.trim()}\n${urls.join("\n")}` : urls.join("\n")));
+    }
+    if (failures.length > 0) {
+      setError(`Couldn't upload: ${failures.join(", ")}`);
+    }
   }
 
   const itemsCopy = ITEMS_COPY[templateType];
@@ -238,7 +268,25 @@ export default function CreatePage() {
         )}
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">{itemsCopy.label}</span>
+          <span className="text-sm font-medium">
+            {usesImageItems ? "Images — upload files or paste URLs, one per line" : itemsCopy.label}
+          </span>
+          {usesImageItems && (
+            <div className="flex items-center gap-2">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                multiple
+                disabled={uploading}
+                onChange={(e) => {
+                  handleFilesSelected(e.target.files);
+                  e.target.value = "";
+                }}
+                className="flex-1 text-sm text-black/60 dark:text-white/60 file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-blue-700 disabled:opacity-50"
+              />
+              {uploading && <span className="text-xs text-black/40 dark:text-white/40">Uploading…</span>}
+            </div>
+          )}
           <textarea
             required
             rows={5}
@@ -298,7 +346,7 @@ export default function CreatePage() {
 
         <button
           type="submit"
-          disabled={submitting || items.length === 0 || !canAfford}
+          disabled={submitting || uploading || items.length === 0 || !canAfford}
           className="rounded-full bg-orange-500 hover:bg-orange-600 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
         >
           {submitting ? "Posting…" : `Post for ${totalCost} credits`}

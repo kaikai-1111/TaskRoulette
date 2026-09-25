@@ -20,6 +20,9 @@ export const ECONOMY = {
   MAX_VIDEO_SECONDS: 6,
   DEFAULT_VIDEO_SECONDS: 4,
   MAX_VIDEO_UPLOAD_BYTES: 8 * 1024 * 1024,
+
+  // Creator-uploaded challenge item images (bounding box / point / labeling).
+  MAX_IMAGE_UPLOAD_BYTES: 10 * 1024 * 1024,
 } as const;
 
 export class InsufficientCreditsError extends Error {
