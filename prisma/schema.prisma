@@ -70,6 +70,13 @@ model User {
   email            String? @unique
   recoveryCodeHash String?
 
+  // "Continue with Google" — an alternative to the recovery-code flow above.
+  // googleId is the token's stable `sub` claim; email is shared with the
+  // field above (whichever path created the account first "owns" that
+  // email — Google sign-in on a matching email links to it rather than
+  // erroring, since Google has already verified that email for us).
+  googleId String? @unique
+
   // Self-attested age/ToS gate, shown once before first use of the app.
   ageAttested Boolean @default(false)
 

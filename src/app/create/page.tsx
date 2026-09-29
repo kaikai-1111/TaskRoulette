@@ -8,6 +8,7 @@ import { ECONOMY } from "@/lib/economy";
 import { TEMPLATE_TYPES, type TemplateType } from "@/lib/templates/types";
 import { useCredits } from "@/components/CreditsProvider";
 import CreateAccountForm from "@/components/CreateAccountForm";
+import ImageSearch from "@/components/ImageSearch";
 
 const NEEDS_TARGET_LABEL: TemplateType[] = ["BOUNDING_BOX", "POINT"];
 
@@ -115,6 +116,11 @@ export default function CreatePage() {
     router.push(`/challenges/${result.challengeId}`);
   }
 
+  function appendItems(urls: string[]) {
+    if (urls.length === 0) return;
+    setItemsRaw((prev) => (prev.trim() ? `${prev.trim()}\n${urls.join("\n")}` : urls.join("\n")));
+  }
+
   async function handleFilesSelected(files: FileList | null) {
     if (!files || files.length === 0) return;
     setError(null);
@@ -136,9 +142,7 @@ export default function CreatePage() {
       }
     }
     setUploading(false);
-    if (urls.length > 0) {
-      setItemsRaw((prev) => (prev.trim() ? `${prev.trim()}\n${urls.join("\n")}` : urls.join("\n")));
-    }
+    appendItems(urls);
     if (failures.length > 0) {
       setError(`Couldn't upload: ${failures.join(", ")}`);
     }
@@ -312,6 +316,7 @@ export default function CreatePage() {
               {uploading && <span className="text-xs text-black/40 dark:text-white">Uploading…</span>}
             </div>
           )}
+          {usesImageItems && <ImageSearch onAdd={appendItems} />}
           <textarea
             required
             rows={5}

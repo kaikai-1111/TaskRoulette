@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { restoreAccount } from "@/app/account/actions";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default function RestorePage() {
   const router = useRouter();
@@ -10,6 +11,11 @@ export default function RestorePage() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  function goHome() {
+    router.push("/");
+    router.refresh();
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,8 +27,7 @@ export default function RestorePage() {
       setError(result.error);
       return;
     }
-    router.push("/");
-    router.refresh();
+    goHome();
   }
 
   return (
@@ -32,6 +37,18 @@ export default function RestorePage() {
         Bring a claimed account&apos;s credits to this device. This replaces this browser&apos;s
         current credit balance.
       </p>
+
+      {!!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+        <>
+          <GoogleSignInButton onSuccess={goHome} />
+          <div className="flex items-center gap-3 text-xs text-black/40 dark:text-white my-4">
+            <div className="h-px flex-1 bg-black/10 dark:bg-white/15" />
+            or use your recovery code
+            <div className="h-px flex-1 bg-black/10 dark:bg-white/15" />
+          </div>
+        </>
+      )}
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           type="email"

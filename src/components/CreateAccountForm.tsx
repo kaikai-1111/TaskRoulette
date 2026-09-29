@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { createAccount } from "@/app/account/actions";
 import { USERNAME_HINT } from "@/lib/username";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default function CreateAccountForm({
   onCreated,
@@ -57,54 +58,67 @@ export default function CreateAccountForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Username</span>
-        <input
-          required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="pigeon_watch"
-          className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
-        />
-        <span className="text-xs text-black/40 dark:text-white">{USERNAME_HINT}</span>
-      </label>
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Display name</span>
-        <input
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          placeholder="Defaults to your username"
-          className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
-        />
-      </label>
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Email</span>
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
-        />
-      </label>
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      <button
-        type="submit"
-        disabled={submitting}
-        className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-2.5 font-semibold text-white disabled:opacity-40"
-      >
-        {submitting ? "Creating…" : "Create account"}
-      </button>
-      <p className="text-xs text-black/40 dark:text-white">
-        No password — you&apos;ll get a one-time recovery code instead. One account per email.
-        Already have one?{" "}
-        <Link href="/restore" className="underline">
-          Sign in
-        </Link>
-        .
-      </p>
-    </form>
+    <div className="flex flex-col gap-4">
+      {!!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+        <>
+          <GoogleSignInButton onSuccess={() => onCreated?.()} />
+          <div className="flex items-center gap-3 text-xs text-black/40 dark:text-white">
+            <div className="h-px flex-1 bg-black/10 dark:bg-white/15" />
+            or
+            <div className="h-px flex-1 bg-black/10 dark:bg-white/15" />
+          </div>
+        </>
+      )}
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium">Username</span>
+          <input
+            required
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="pigeon_watch"
+            className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+          />
+          <span className="text-xs text-black/40 dark:text-white">{USERNAME_HINT}</span>
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium">Display name</span>
+          <input
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder="Defaults to your username"
+            className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium">Email</span>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+          />
+        </label>
+        {error && <p className="text-sm text-red-500">{error}</p>}
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-2.5 font-semibold text-white disabled:opacity-40"
+        >
+          {submitting ? "Creating…" : "Create account"}
+        </button>
+        <p className="text-xs text-black/40 dark:text-white">
+          No password — you&apos;ll get a one-time recovery code instead. One account per email.
+          Already have one?{" "}
+          <Link href="/restore" className="underline">
+            Sign in
+          </Link>
+          .
+        </p>
+      </form>
+    </div>
   );
 }
