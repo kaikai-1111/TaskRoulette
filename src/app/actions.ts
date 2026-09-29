@@ -278,9 +278,12 @@ export async function createChallenge(
   const user = await getCurrentUser();
 
   // Doing challenges never requires an account — posting one does, so
-  // there's a real identity behind exported/creator-facing data.
+  // there's a real identity behind exported/creator-facing data. Admins
+  // (authenticated via ADMIN_PASSWORD) skip this to post quickly.
   if (!user.email || !user.username) {
-    return { ok: false, needsAccount: true, error: "Create an account to post a challenge." };
+    if (!(await isAdmin())) {
+      return { ok: false, needsAccount: true, error: "Create an account to post a challenge." };
+    }
   }
 
   if (!input.prompt.trim()) return { ok: false, error: "Give the challenge a prompt." };

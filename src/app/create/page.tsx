@@ -54,9 +54,13 @@ export default function CreatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [hasAccount, setHasAccount] = useState<boolean | null>(null); // null = loading
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    getAccountStatus().then((s) => setHasAccount(s.hasAccount));
+    getAccountStatus().then((s) => {
+      setHasAccount(s.hasAccount);
+      setIsAdmin(s.canPostWithoutAccount);
+    });
   }, []);
 
   const usesImageItems =
@@ -154,7 +158,7 @@ export default function CreatePage() {
     return <div className="mx-auto w-full max-w-lg px-4 py-8 text-black/40 dark:text-white">Loading…</div>;
   }
 
-  if (!hasAccount) {
+  if (!hasAccount && !isAdmin) {
     return (
       <div className="mx-auto w-full max-w-sm px-4 py-8">
         <h1 className="text-2xl font-bold mb-1">Create an account to post</h1>

@@ -5,6 +5,7 @@ import { OAuth2Client } from "google-auth-library";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, ANON_COOKIE_NAME } from "@/lib/identity";
+import { isAdmin } from "@/lib/admin";
 import { generateRecoveryCode, hashRecoveryCode } from "@/lib/recovery";
 import { isValidUsername, normalizeUsername, USERNAME_HINT } from "@/lib/username";
 
@@ -16,6 +17,8 @@ export async function getAccountStatus() {
     displayName: user.displayName,
     credits: user.credits,
     hasAccount: !!(user.email && user.username),
+    // Admins (ADMIN_PASSWORD) can post challenges without an account too.
+    canPostWithoutAccount: await isAdmin(),
   };
 }
 
