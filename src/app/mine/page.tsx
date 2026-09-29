@@ -8,7 +8,7 @@ export default async function MyChallengesPage() {
     <div className="mx-auto w-full max-w-lg px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">My challenges</h1>
       {challenges.length === 0 ? (
-        <p className="text-black/50 dark:text-white/50">
+        <p className="text-black/50 dark:text-white">
           You haven&apos;t posted anything yet.{" "}
           <Link href="/create" className="text-blue-600 dark:text-blue-400 underline">
             Post your first challenge
@@ -37,7 +37,7 @@ export default async function MyChallengesPage() {
                       {c.status.toLowerCase()}
                     </span>
                   </div>
-                  <div className="text-sm text-black/50 dark:text-white/50 mt-1">
+                  <div className="text-sm text-black/50 dark:text-white mt-1">
                     {c._count.submissions} / {totalTarget} responses · {c.templateType.toLowerCase()}
                   </div>
                 </Link>

@@ -46,7 +46,7 @@ export default function ThemeToggle() {
     <button
       onClick={cycle}
       title={`Theme: ${label} (click to change)`}
-      className="flex h-6 w-6 items-center justify-center rounded-full text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white transition"
+      className="flex h-6 w-6 items-center justify-center rounded-full text-black/50 hover:text-black dark:text-white dark:hover:text-white transition"
     >
       {theme === "light" ? (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">

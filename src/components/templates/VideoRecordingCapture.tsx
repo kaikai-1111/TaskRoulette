@@ -138,7 +138,7 @@ export default function VideoRecordingCapture({ item, onSubmit }: CaptureProps) 
         <p className="text-lg font-medium">{drawPrompt}</p>
         <div className="rounded-lg border border-amber-400/40 bg-amber-400/10 p-4 text-sm text-left">
           <p className="font-semibold mb-1">This challenge records video.</p>
-          <p className="text-black/60 dark:text-white/60">
+          <p className="text-black/60 dark:text-white">
             You&apos;ll be asked for camera (and mic) access. The clip is capped at{" "}
             {config.maxDurationSeconds}s, and by recording you agree it may be stored and used as
             training/derived data, per the{" "}
@@ -160,7 +160,7 @@ export default function VideoRecordingCapture({ item, onSubmit }: CaptureProps) 
   }
 
   if (stage === "starting") {
-    return <p className="text-black/40 dark:text-white/40">Requesting camera access…</p>;
+    return <p className="text-black/40 dark:text-white">Requesting camera access…</p>;
   }
 
   if (stage === "error") {

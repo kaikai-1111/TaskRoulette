@@ -17,12 +17,12 @@ export default async function BrowsePage() {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-bold mb-1">Top challenges</h1>
-      <p className="text-sm text-black/50 dark:text-white/50 mb-6">
+      <p className="text-sm text-black/50 dark:text-white mb-6">
         The most-answered open challenges right now. Tap one to jump straight in.
       </p>
 
       {challenges.length === 0 ? (
-        <p className="text-black/50 dark:text-white/50">
+        <p className="text-black/50 dark:text-white">
           Nothing open yet.{" "}
           <Link href="/create" className="text-blue-600 dark:text-blue-400 underline">
             Post the first challenge
@@ -52,7 +52,7 @@ export default async function BrowsePage() {
                       className="h-full w-full object-cover group-hover:scale-105 transition"
                     />
                   ) : (
-                    <p className="px-3 text-center text-sm italic text-black/60 dark:text-white/70 line-clamp-4">
+                    <p className="px-3 text-center text-sm italic text-black/60 dark:text-white line-clamp-4">
                       &ldquo;{c.thumbnailText ?? c.prompt}&rdquo;
                     </p>
                   )}
@@ -70,7 +70,7 @@ export default async function BrowsePage() {
                   <div className="mt-1.5 h-1 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
                     <div className="h-full bg-blue-500" style={{ width: `${pct}%` }} />
                   </div>
-                  <p className="mt-1 text-[11px] text-black/40 dark:text-white/40">
+                  <p className="mt-1 text-[11px] text-black/40 dark:text-white">
                     {c.responseCount} / {c.totalTarget} responses
                   </p>
                 </div>

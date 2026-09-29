@@ -28,7 +28,7 @@ export default function RestorePage() {
   return (
     <div className="mx-auto w-full max-w-sm px-4 py-8">
       <h1 className="text-2xl font-bold mb-1">Restore account</h1>
-      <p className="text-sm text-black/50 dark:text-white/50 mb-6">
+      <p className="text-sm text-black/50 dark:text-white mb-6">
         Bring a claimed account&apos;s credits to this device. This replaces this browser&apos;s
         current credit balance.
       </p>

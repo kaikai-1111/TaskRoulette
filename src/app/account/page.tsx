@@ -66,19 +66,19 @@ export default function AccountPage() {
   }
 
   if (status === undefined) {
-    return <div className="mx-auto w-full max-w-sm px-4 py-8 text-black/40 dark:text-white/40">Loading…</div>;
+    return <div className="mx-auto w-full max-w-sm px-4 py-8 text-black/40 dark:text-white">Loading…</div>;
   }
 
   return (
     <div className="mx-auto w-full max-w-sm px-4 py-8">
       <h1 className="text-2xl font-bold mb-1">Account</h1>
-      <p className="text-sm text-black/50 dark:text-white/50 mb-6">
+      <p className="text-sm text-black/50 dark:text-white mb-6">
         {status.credits} credits on this device.
       </p>
 
       {!status.hasAccount ? (
         <div className="flex flex-col gap-3">
-          <p className="text-sm text-black/60 dark:text-white/60">
+          <p className="text-sm text-black/60 dark:text-white">
             Doing challenges never requires an account. Create one if you want to post
             challenges, or to carry your credits to another device.
           </p>
@@ -127,7 +127,7 @@ export default function AccountPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-semibold">{status.displayName}</p>
-                  <p className="text-sm text-black/50 dark:text-white/50">
+                  <p className="text-sm text-black/50 dark:text-white">
                     @{status.username} · {status.email}
                   </p>
                 </div>
@@ -168,7 +168,7 @@ export default function AccountPage() {
               </>
             ) : (
               <>
-                <p className="text-sm text-black/50 dark:text-white/50">
+                <p className="text-sm text-black/50 dark:text-white">
                   Lost your recovery code? Generating a new one invalidates the old code.
                 </p>
                 <button
@@ -182,7 +182,7 @@ export default function AccountPage() {
             )}
           </div>
 
-          <p className="text-xs text-black/40 dark:text-white/40">
+          <p className="text-xs text-black/40 dark:text-white">
             Signing in on another device?{" "}
             <Link href="/restore" className="underline">
               Restore your account there
@@ -198,7 +198,7 @@ export default function AccountPage() {
 function Stat({ label, value, wide }: { label: string; value: string | number; wide?: boolean }) {
   return (
     <div className={`rounded-lg bg-black/5 dark:bg-white/10 px-3 py-2 ${wide ? "col-span-2" : ""}`}>
-      <p className="text-xs text-black/50 dark:text-white/50">{label}</p>
+      <p className="text-xs text-black/50 dark:text-white">{label}</p>
       <p className="text-lg font-semibold">{value}</p>
     </div>
   );

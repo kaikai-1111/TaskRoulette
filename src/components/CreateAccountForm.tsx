@@ -67,7 +67,7 @@ export default function CreateAccountForm({
           placeholder="pigeon_watch"
           className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
         />
-        <span className="text-xs text-black/40 dark:text-white/40">{USERNAME_HINT}</span>
+        <span className="text-xs text-black/40 dark:text-white">{USERNAME_HINT}</span>
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Display name</span>
@@ -97,7 +97,7 @@ export default function CreateAccountForm({
       >
         {submitting ? "Creating…" : "Create account"}
       </button>
-      <p className="text-xs text-black/40 dark:text-white/40">
+      <p className="text-xs text-black/40 dark:text-white">
         No password — you&apos;ll get a one-time recovery code instead. One account per email.
         Already have one?{" "}
         <Link href="/restore" className="underline">

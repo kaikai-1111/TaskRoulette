@@ -22,7 +22,7 @@ export default function TermsPage() {
         Credits have no cash value and can&apos;t be bought, sold, or redeemed for money. We can
         adjust balances or remove content at our discretion.
       </p>
-      <p className="text-black/50 dark:text-white/50">
+      <p className="text-black/50 dark:text-white">
         This is a v1 placeholder, not a substitute for real legal review before a public launch.
       </p>
     </div>

@@ -8,11 +8,11 @@ export default function NavHeader() {
     <header className="flex items-center gap-3 border-b border-black/5 dark:border-white/10 px-4 py-3">
       <Link
         href="/"
-        className="shrink-0 font-bold tracking-tight text-blue-600 dark:text-blue-400 whitespace-nowrap"
+        className="shrink-0 font-bold tracking-tight text-blue-600 dark:text-orange-400 whitespace-nowrap"
       >
         Task Roulette
       </Link>
-      <nav className="hidden sm:flex flex-1 items-center gap-4 text-sm font-medium whitespace-nowrap text-black/60 dark:text-white/60">
+      <nav className="hidden sm:flex flex-1 items-center gap-4 text-sm font-medium whitespace-nowrap text-black/60 dark:text-white">
         <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400">
           Feed
         </Link>

@@ -20,22 +20,22 @@ export default async function AdminPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Moderation queue</h1>
         <div className="flex items-center gap-4 text-sm">
-          <Link href="/admin/challenges" className="text-black/50 dark:text-white/50 underline">
+          <Link href="/admin/challenges" className="text-black/50 dark:text-white underline">
             All challenges
           </Link>
           <form action={adminLogoutAction}>
-            <button className="text-black/50 dark:text-white/50 underline">Log out</button>
+            <button className="text-black/50 dark:text-white underline">Log out</button>
           </form>
         </div>
       </div>
 
       {flags.length === 0 ? (
-        <p className="text-black/50 dark:text-white/50">No open flags. All clear.</p>
+        <p className="text-black/50 dark:text-white">No open flags. All clear.</p>
       ) : (
         <ul className="flex flex-col gap-4">
           {flags.map((flag) => (
             <li key={flag.id} className="rounded-lg border border-black/10 dark:border-white/15 p-4">
-              <div className="flex items-center justify-between text-xs text-black/40 dark:text-white/40 mb-2">
+              <div className="flex items-center justify-between text-xs text-black/40 dark:text-white mb-2">
                 <span>{flag.targetType}</span>
                 <span>{new Date(flag.createdAt).toLocaleString()}</span>
               </div>
@@ -47,7 +47,7 @@ export default async function AdminPage() {
               {flag.challenge && (
                 <div className="rounded bg-black/5 dark:bg-white/10 p-3 mb-3 text-sm">
                   <p className="font-medium">{flag.challenge.prompt}</p>
-                  <p className="text-black/50 dark:text-white/50 text-xs mt-1">
+                  <p className="text-black/50 dark:text-white text-xs mt-1">
                     {flag.challenge.templateType.toLowerCase()} · status {flag.challenge.status.toLowerCase()} ·
                     posted by {flag.challenge.creator.displayName ?? flag.challenge.creator.id.slice(0, 8)}
                   </p>
@@ -57,10 +57,10 @@ export default async function AdminPage() {
               {flag.submission && (
                 <div className="rounded bg-black/5 dark:bg-white/10 p-3 mb-3 text-sm">
                   <p className="font-medium">{flag.submission.challenge.prompt}</p>
-                  <p className="text-black/70 dark:text-white/70 font-mono text-xs mt-1">
+                  <p className="text-black/70 dark:text-white font-mono text-xs mt-1">
                     answer: {formatAnswerSummary(flag.submission.challenge.templateType, flag.submission.answer)}
                   </p>
-                  <p className="text-black/50 dark:text-white/50 text-xs mt-1">
+                  <p className="text-black/50 dark:text-white text-xs mt-1">
                     status {flag.submission.status.toLowerCase()} · submitted by{" "}
                     {flag.submission.submitter.displayName ?? flag.submission.submitter.id.slice(0, 8)}
                   </p>

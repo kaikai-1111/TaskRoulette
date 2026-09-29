@@ -19,13 +19,13 @@ export default async function AdminChallengesPage() {
     <div className="mx-auto w-full max-w-3xl px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">All challenges</h1>
-        <Link href="/admin" className="text-sm text-black/50 dark:text-white/50 underline">
+        <Link href="/admin" className="text-sm text-black/50 dark:text-white underline">
           Moderation queue
         </Link>
       </div>
 
       {challenges.length === 0 ? (
-        <p className="text-black/50 dark:text-white/50">No challenges yet.</p>
+        <p className="text-black/50 dark:text-white">No challenges yet.</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {challenges.map((c) => {
@@ -47,7 +47,7 @@ export default async function AdminChallengesPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-black/50 dark:text-white/50">
+                  <p className="text-xs text-black/50 dark:text-white">
                     {c.templateType.toLowerCase()} · {c.category.toLowerCase()} ·{" "}
                     {c._count.submissions} / {totalTarget} responses · {c.items.length} item(s) · by{" "}
                     {c.creator.displayName ?? c.creator.email ?? c.creator.id.slice(0, 8)} ·{" "}

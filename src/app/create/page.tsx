@@ -147,14 +147,14 @@ export default function CreatePage() {
   const itemsCopy = ITEMS_COPY[templateType];
 
   if (hasAccount === null) {
-    return <div className="mx-auto w-full max-w-lg px-4 py-8 text-black/40 dark:text-white/40">Loading…</div>;
+    return <div className="mx-auto w-full max-w-lg px-4 py-8 text-black/40 dark:text-white">Loading…</div>;
   }
 
   if (!hasAccount) {
     return (
       <div className="mx-auto w-full max-w-sm px-4 py-8">
         <h1 className="text-2xl font-bold mb-1">Create an account to post</h1>
-        <p className="text-sm text-black/50 dark:text-white/50 mb-6">
+        <p className="text-sm text-black/50 dark:text-white mb-6">
           Doing challenges never requires this — only posting one does, so there&apos;s a real
           identity behind the data you collect.
         </p>
@@ -166,7 +166,7 @@ export default function CreatePage() {
   return (
     <div className="mx-auto w-full max-w-lg px-4 py-8">
       <h1 className="text-2xl font-bold mb-1">Post a challenge</h1>
-      <p className="text-sm text-black/50 dark:text-white/50 mb-6">
+      <p className="text-sm text-black/50 dark:text-white mb-6">
         {credits === null ? "…" : `You have ${credits} credits.`} Posting a challenge costs a flat{" "}
         {ECONOMY.CHALLENGE_POST_COST} credits, no matter how many items or responses you ask for.
       </p>
@@ -187,7 +187,7 @@ export default function CreatePage() {
                 }`}
               >
                 <div className="font-semibold">{t.label}</div>
-                <div className="text-black/50 dark:text-white/50 text-xs">{t.blurb}</div>
+                <div className="text-black/50 dark:text-white text-xs">{t.blurb}</div>
               </button>
             ))}
           </div>
@@ -240,7 +240,7 @@ export default function CreatePage() {
         )}
 
         {templateType === "VIDEO_RECORDING" && (
-          <div className="rounded-lg bg-amber-400/10 border border-amber-400/30 px-3 py-2 text-xs text-black/60 dark:text-white/60">
+          <div className="rounded-lg bg-amber-400/10 border border-amber-400/30 px-3 py-2 text-xs text-black/60 dark:text-white">
             Doers see an explicit camera-consent screen before recording, and must confirm they&apos;re
             13+ (on top of the site-wide age gate). Clips are hard-capped below.
           </div>
@@ -307,9 +307,9 @@ export default function CreatePage() {
                   handleFilesSelected(e.target.files);
                   e.target.value = "";
                 }}
-                className="flex-1 text-sm text-black/60 dark:text-white/60 file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-blue-700 disabled:opacity-50"
+                className="flex-1 text-sm text-black/60 dark:text-white file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-blue-700 disabled:opacity-50"
               />
-              {uploading && <span className="text-xs text-black/40 dark:text-white/40">Uploading…</span>}
+              {uploading && <span className="text-xs text-black/40 dark:text-white">Uploading…</span>}
             </div>
           )}
           <textarea
@@ -320,7 +320,7 @@ export default function CreatePage() {
             placeholder={itemsCopy.placeholder}
             className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 font-mono text-sm"
           />
-          <span className="text-xs text-black/40 dark:text-white/40">{items.length} item(s)</span>
+          <span className="text-xs text-black/40 dark:text-white">{items.length} item(s)</span>
         </label>
 
         <div className="flex gap-4">

@@ -93,7 +93,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
 
   if (item === undefined) {
     return (
-      <div className="flex flex-1 items-center justify-center text-black/40 dark:text-white/40">
+      <div className="flex flex-1 items-center justify-center text-black/40 dark:text-white">
         Loading…
       </div>
     );
@@ -105,7 +105,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
         <p className="text-xl font-medium">
           {targeted ? "Can't jump into that one." : "You're all caught up."}
         </p>
-        <p className="text-black/50 dark:text-white/50">
+        <p className="text-black/50 dark:text-white">
           {targeted
             ? "It's already full, it's yours, or you've already answered it."
             : "No open challenges right now — post one and be the first in line."}
@@ -134,7 +134,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
       <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center px-6">
         <p className="text-4xl">✅</p>
         <p className="text-xl font-semibold">+{feedback.creditsEarned} credit</p>
-        <p className="text-black/50 dark:text-white/50">
+        <p className="text-black/50 dark:text-white">
           You&apos;re response #{feedback.itemResponseCount} of {feedback.targetResponsesPerItem} on this one ({pct}%
           full)
         </p>
@@ -170,7 +170,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
           ) : (
             <button
               onClick={() => setReporting((r) => !r)}
-              className="text-black/30 dark:text-white/30 hover:text-red-500 text-xs underline underline-offset-2"
+              className="text-black/30 dark:text-white hover:text-red-500 text-xs underline underline-offset-2"
             >
               Report
             </button>
@@ -178,7 +178,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
         </div>
         {reporting && (
           <div className="absolute right-4 top-full mt-1 z-10 w-56 rounded-lg border border-black/10 dark:border-white/15 bg-white dark:bg-black shadow-lg p-2 flex flex-col gap-1">
-            <p className="px-2 pt-1 pb-2 text-xs text-black/50 dark:text-white/50">What&apos;s wrong with this?</p>
+            <p className="px-2 pt-1 pb-2 text-xs text-black/50 dark:text-white">What&apos;s wrong with this?</p>
             {["Inappropriate", "Broken / confusing", "Spam"].map((reason) => (
               <button
                 key={reason}
@@ -190,7 +190,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
             ))}
             <button
               onClick={() => setReporting(false)}
-              className="rounded px-2 py-1.5 text-left text-sm text-black/40 dark:text-white/40 hover:bg-black/5 dark:hover:bg-white/10"
+              className="rounded px-2 py-1.5 text-left text-sm text-black/40 dark:text-white hover:bg-black/5 dark:hover:bg-white/10"
             >
               Cancel
             </button>
@@ -214,7 +214,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
       <div className="flex justify-center pb-6">
         <button
           onClick={loadNext}
-          className="text-sm text-black/40 dark:text-white/40 underline underline-offset-2"
+          className="text-sm text-black/40 dark:text-white underline underline-offset-2"
         >
           Skip
         </button>

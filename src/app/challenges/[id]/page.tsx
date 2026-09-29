@@ -29,7 +29,7 @@ export default async function ChallengeResultsPage({
           {challenge.status.toLowerCase()}
         </span>
       </div>
-      <p className="text-sm text-black/50 dark:text-white/50 mb-6">
+      <p className="text-sm text-black/50 dark:text-white mb-6">
         {totalSubmissions} / {totalTarget} responses · {challenge.templateType.toLowerCase()} ·{" "}
         {challenge.items.length} item(s)
       </p>
@@ -45,10 +45,10 @@ export default async function ChallengeResultsPage({
         {challenge.items.map((item) => (
           <div key={item.id} className="rounded-lg border border-black/10 dark:border-white/15 p-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-black/50 dark:text-white/50 truncate max-w-xs">
+              <span className="text-sm text-black/50 dark:text-white truncate max-w-xs">
                 {item.mediaUrl ?? item.textContent}
               </span>
-              <span className="text-xs text-black/40 dark:text-white/40 shrink-0">
+              <span className="text-xs text-black/40 dark:text-white shrink-0">
                 {item.submissions.length} / {challenge.targetResponsesPerItem}
               </span>
             </div>
@@ -57,7 +57,7 @@ export default async function ChallengeResultsPage({
               <img src={item.mediaUrl} alt="" className="max-h-40 rounded mb-3" />
             )}
             {item.submissions.length === 0 ? (
-              <p className="text-sm text-black/40 dark:text-white/40">No responses yet.</p>
+              <p className="text-sm text-black/40 dark:text-white">No responses yet.</p>
             ) : challenge.templateType === "FREEFORM_DRAWING" ? (
               <div className="flex flex-wrap gap-2">
                 {item.submissions.map((s) => (

@@ -20,7 +20,7 @@ export default function MobileNavMenu() {
         onClick={() => setOpen((o) => !o)}
         aria-label="Menu"
         aria-expanded={open}
-        className="flex h-8 w-8 items-center justify-center text-black/60 dark:text-white/60"
+        className="flex h-8 w-8 items-center justify-center text-black/60 dark:text-white"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
           {open ? (
@@ -39,7 +39,7 @@ export default function MobileNavMenu() {
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="px-4 py-2.5 text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 hover:text-blue-600 dark:hover:text-blue-400"
+                className="px-4 py-2.5 text-black/70 dark:text-white hover:bg-black/5 dark:hover:bg-white/10 hover:text-blue-600 dark:hover:text-blue-400"
               >
                 {l.label}
               </Link>
