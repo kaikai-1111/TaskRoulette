@@ -3,11 +3,22 @@
 import { useEffect, useState } from "react";
 
 type Theme = "light" | "dark" | null; // null = follow system
+type Resolved = "light" | "dark";
 
+function resolveTheme(theme: Theme): Resolved {
+  if (theme) return theme;
+  if (typeof window === "undefined") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+// Always applies one explicit class (never neither) — every dark: Tailwind
+// utility in the app is keyed off .dark being present on an ancestor
+// (see the custom-variant in globals.css), which a bare "follow system"
+// state with no class at all would silently fail to match.
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.classList.remove("light", "dark");
-  if (theme) root.classList.add(theme);
+  root.classList.add(resolveTheme(theme));
 }
 
 function readStoredTheme(): Theme {
@@ -25,9 +36,23 @@ export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Defensive — the blocking init script in layout.tsx should already have
+    // applied this, but re-asserting here is cheap and idempotent.
+    applyTheme(theme);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // In "Auto" mode, keep tracking the OS preference live instead of freezing
+  // whatever it resolved to at mount/toggle time.
+  useEffect(() => {
+    if (theme !== null) return;
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => applyTheme(null);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, [theme]);
 
   function cycle() {
     // system -> light -> dark -> system

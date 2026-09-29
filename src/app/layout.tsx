@@ -21,9 +21,13 @@ export const metadata: Metadata = {
   description: "Quick, weird 30-second tasks for AI training data.",
 };
 
-// Runs before paint so a saved theme choice applies immediately, instead of
-// flashing the system-default theme first and then swapping.
-const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.classList.add(t);}catch(e){}})();`;
+// Runs before paint so the right theme applies immediately, instead of
+// flashing one theme and then swapping. Always resolves to an explicit
+// light/dark class — including for "follow system" (no saved choice) —
+// since every dark: Tailwind utility in the app only activates when a
+// .dark class is actually present on an ancestor (see globals.css), not
+// from the prefers-color-scheme media query alone.
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark')t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.classList.add(t);}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
