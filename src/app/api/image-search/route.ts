@@ -16,23 +16,41 @@ interface WikimediaPage {
 export async function GET(req: Request) {
   await getCurrentUser(); // requires the anon_token cookie
 
-  const q = new URL(req.url).searchParams.get("q")?.trim();
+  const params = new URL(req.url).searchParams;
+  const q = params.get("q")?.trim();
   if (!q) return NextResponse.json({ error: "Missing search query." }, { status: 400 });
 
-  const apiUrl = new URL("https://commons.wikimedia.org/w/api.php");
-  apiUrl.search = new URLSearchParams({
+  // Pagination: the client echoes back the `continue` object Wikimedia's API
+  // returned with the previous page (JSON-encoded) to fetch the next one —
+  // that's how a caller walks through *all* results instead of just the
+  // first batch.
+  const cont = params.get("cont");
+  const query: Record<string, string> = {
     action: "query",
     generator: "search",
     gsrnamespace: "6",
     gsrsearch: q,
-    gsrlimit: "24",
+    gsrlimit: "50", // Wikimedia's per-request max for unauthenticated callers
     prop: "imageinfo",
     iiprop: "url|mime",
     iiurlwidth: "400",
     format: "json",
-  }).toString();
+  };
+  if (cont) {
+    try {
+      Object.assign(query, JSON.parse(cont));
+    } catch {
+      // ignore a malformed continue token rather than failing the search
+    }
+  }
 
-  let data: { query?: { pages?: Record<string, WikimediaPage> } };
+  const apiUrl = new URL("https://commons.wikimedia.org/w/api.php");
+  apiUrl.search = new URLSearchParams(query).toString();
+
+  let data: {
+    query?: { pages?: Record<string, WikimediaPage> };
+    continue?: Record<string, string>;
+  };
   try {
     const res = await fetch(apiUrl, { headers: { "User-Agent": "TaskRoulette/1.0" } });
     if (!res.ok) throw new Error(`Wikimedia API returned ${res.status}`);
@@ -47,5 +65,8 @@ export async function GET(req: Request) {
     .filter((info): info is NonNullable<typeof info> => !!info && PHOTO_MIME_TYPES.has(info.mime))
     .map((info) => ({ url: info.url, thumbUrl: info.thumburl ?? info.url }));
 
-  return NextResponse.json({ results });
+  return NextResponse.json({
+    results,
+    cont: data.continue ? JSON.stringify(data.continue) : null,
+  });
 }

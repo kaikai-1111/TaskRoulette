@@ -11,8 +11,10 @@ export default function ImageSearch({ onAdd }: { onAdd: (urls: string[]) => void
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Result[] | null>(null);
+  const [cont, setCont] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSearch() {
@@ -25,12 +27,34 @@ export default function ImageSearch({ onAdd }: { onAdd: (urls: string[]) => void
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? "Search failed");
       setResults(body.results);
+      setCont(body.cont ?? null);
       if (body.results.length === 0) setError("No results — try a different search.");
     } catch {
       setError("Search failed — try again.");
       setResults(null);
+      setCont(null);
     }
     setSearching(false);
+  }
+
+  async function loadMore() {
+    if (!cont) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(
+        `/api/image-search?q=${encodeURIComponent(query.trim())}&cont=${encodeURIComponent(cont)}`
+      );
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Search failed");
+      setResults((prev) => {
+        const seen = new Set((prev ?? []).map((r) => r.url));
+        return [...(prev ?? []), ...body.results.filter((r: Result) => !seen.has(r.url))];
+      });
+      setCont(body.cont ?? null);
+    } catch {
+      setError("Couldn't load more — try again.");
+    }
+    setLoadingMore(false);
   }
 
   function toggle(url: string) {
@@ -46,6 +70,7 @@ export default function ImageSearch({ onAdd }: { onAdd: (urls: string[]) => void
     onAdd([...selected]);
     setSelected(new Set());
     setResults(null);
+    setCont(null);
     setQuery("");
     setOpen(false);
   }
@@ -93,6 +118,7 @@ export default function ImageSearch({ onAdd }: { onAdd: (urls: string[]) => void
           onClick={() => {
             setOpen(false);
             setResults(null);
+            setCont(null);
             setError(null);
           }}
           className="text-sm text-black/40 dark:text-white px-2"
@@ -105,7 +131,7 @@ export default function ImageSearch({ onAdd }: { onAdd: (urls: string[]) => void
 
       {results && results.length > 0 && (
         <>
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-64 overflow-y-auto">
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-96 overflow-y-auto">
             {results.map((r) => {
               const isSelected = selected.has(r.url);
               return (
@@ -128,6 +154,16 @@ export default function ImageSearch({ onAdd }: { onAdd: (urls: string[]) => void
               );
             })}
           </div>
+          {cont && (
+            <button
+              type="button"
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="self-start text-sm text-blue-600 dark:text-blue-400 underline disabled:opacity-40"
+            >
+              {loadingMore ? "Loading…" : "Load more results"}
+            </button>
+          )}
           <button
             type="button"
             onClick={addSelected}
