@@ -5,6 +5,15 @@ import { flagContent, getFeedItemForChallenge, getNextFeedItem, submitAnswer } f
 import type { FeedItem } from "@/lib/templates/types";
 import { CAPTURE_COMPONENTS } from "@/components/templates/registry";
 import { useCredits } from "@/components/CreditsProvider";
+import { ECONOMY } from "@/lib/economy";
+
+function hasNoTimer(item: FeedItem): boolean {
+  return (
+    item.templateType === "VIDEO_RECORDING" ||
+    item.templateType === "PHOTO_CAPTURE" ||
+    item.timeLimitSeconds === ECONOMY.NO_TIME_LIMIT
+  );
+}
 
 type Feedback = {
   creditsEarned: number;
@@ -56,11 +65,12 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
 
   // Countdown; auto-skip to the next item when time runs out. Video recording
   // and photo capture manage their own pacing (camera permission + consent +
-  // capture + upload can easily run past a normal answer window) so they opt
-  // out of this one.
+  // capture + upload can easily run past a normal answer window), and a
+  // creator can also explicitly mark a challenge as unlimited — both opt out
+  // of this one.
   useEffect(() => {
     if (!item) return;
-    if (item.templateType === "VIDEO_RECORDING" || item.templateType === "PHOTO_CAPTURE") return;
+    if (hasNoTimer(item)) return;
     if (timeLeft <= 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       loadNext();
@@ -165,7 +175,9 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
         <span className="font-medium">
           {item.templateType === "VIDEO_RECORDING" || item.templateType === "PHOTO_CAPTURE"
             ? ""
-            : `${timeLeft}s`}
+            : item.timeLimitSeconds === ECONOMY.NO_TIME_LIMIT
+              ? "no limit"
+              : `${timeLeft}s`}
         </span>
         <div className="flex items-center gap-3">
           {reportSent ? (
@@ -200,7 +212,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
           </div>
         )}
       </div>
-      {item.templateType !== "VIDEO_RECORDING" && item.templateType !== "PHOTO_CAPTURE" && (
+      {!hasNoTimer(item) && (
         <div className="h-1 w-full bg-black/5 dark:bg-white/10">
           <div
             className="h-full bg-blue-500 transition-[width] duration-1000 ease-linear"

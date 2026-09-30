@@ -300,6 +300,16 @@ export async function createChallenge(
       error: `Responses per item must be between ${ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM} and ${ECONOMY.MAX_TARGET_RESPONSES_PER_ITEM}.`,
     };
   }
+  if (
+    input.timeLimitSeconds !== ECONOMY.NO_TIME_LIMIT &&
+    (input.timeLimitSeconds < ECONOMY.MIN_TIME_LIMIT_SECONDS ||
+      input.timeLimitSeconds > ECONOMY.MAX_TIME_LIMIT_SECONDS)
+  ) {
+    return {
+      ok: false,
+      error: `Time limit must be between ${ECONOMY.MIN_TIME_LIMIT_SECONDS} and ${ECONOMY.MAX_TIME_LIMIT_SECONDS} seconds, or left unlimited.`,
+    };
+  }
 
   let config;
   try {

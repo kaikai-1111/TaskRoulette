@@ -8,6 +8,12 @@ export const ECONOMY = {
   CHALLENGE_POST_COST: 5,
   DEFAULT_TARGET_RESPONSES_PER_ITEM: 10,
   DEFAULT_TIME_LIMIT_SECONDS: 30,
+  // A challenge's timeLimitSeconds is stored as 0 to mean "no limit" — a real
+  // time limit is never zero, so it's an unambiguous sentinel with no schema
+  // change needed. Bounds below apply only when a limit is actually set.
+  NO_TIME_LIMIT: 0,
+  MIN_TIME_LIMIT_SECONDS: 5,
+  MAX_TIME_LIMIT_SECONDS: 3600,
   MIN_TARGET_RESPONSES_PER_ITEM: 1,
   // Raised well past a typical "small dataset" cap on purpose — the flat
   // posting cost means a creator should be able to ask for mass responses

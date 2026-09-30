@@ -62,6 +62,7 @@ export default function CreatePage() {
     ECONOMY.DEFAULT_TARGET_RESPONSES_PER_ITEM
   );
   const [timeLimitSeconds, setTimeLimitSeconds] = useState<number>(ECONOMY.DEFAULT_TIME_LIMIT_SECONDS);
+  const [noTimeLimit, setNoTimeLimit] = useState(false);
   const { credits, adjust } = useCredits();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -119,7 +120,7 @@ export default function CreatePage() {
       purpose,
       prompt,
       config,
-      timeLimitSeconds,
+      timeLimitSeconds: noTimeLimit ? ECONOMY.NO_TIME_LIMIT : timeLimitSeconds,
       targetResponsesPerItem,
       items: challengeItems,
     });
@@ -372,17 +373,23 @@ export default function CreatePage() {
           </label>
           <label className="flex flex-1 flex-col gap-1.5">
             <span className="text-sm font-medium">Time limit (seconds)</span>
-            <select
+            <input
+              type="number"
+              min={ECONOMY.MIN_TIME_LIMIT_SECONDS}
+              max={ECONOMY.MAX_TIME_LIMIT_SECONDS}
               value={timeLimitSeconds}
+              disabled={noTimeLimit}
               onChange={(e) => setTimeLimitSeconds(Number(e.target.value))}
-              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
-            >
-              {[15, 30, 60].map((s) => (
-                <option key={s} value={s}>
-                  {s}s
-                </option>
-              ))}
-            </select>
+              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 disabled:opacity-40"
+            />
+            <label className="flex items-center gap-1.5 text-xs text-black/50 dark:text-white">
+              <input
+                type="checkbox"
+                checked={noTimeLimit}
+                onChange={(e) => setNoTimeLimit(e.target.checked)}
+              />
+              No limit
+            </label>
           </label>
         </div>
 
