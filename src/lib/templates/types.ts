@@ -9,7 +9,8 @@ export type TemplateType =
   | "POINT"
   | "LABELING"
   | "FREEFORM_DRAWING"
-  | "VIDEO_RECORDING";
+  | "VIDEO_RECORDING"
+  | "PHOTO_CAPTURE";
 
 export const TEMPLATE_TYPES: { value: TemplateType; label: string; blurb: string }[] = [
   {
@@ -36,6 +37,11 @@ export const TEMPLATE_TYPES: { value: TemplateType; label: string; blurb: string
     value: "VIDEO_RECORDING",
     label: "Record it",
     blurb: "Doer records a few seconds of video on their camera. Requires camera consent, 13+.",
+  },
+  {
+    value: "PHOTO_CAPTURE",
+    label: "Take a picture",
+    blurb: "Doer takes a photo on their camera. For collecting new data rather than annotating existing data.",
   },
 ];
 
@@ -88,6 +94,14 @@ export interface VideoRecordingAnswer {
   durationMs: number;
 }
 
+// No creator-supplied config — the item's text (or the challenge prompt, for
+// single-item challenges) IS the photo instruction, same as freeform drawing.
+export type PhotoCaptureConfig = Record<string, never>;
+
+export interface PhotoCaptureAnswer {
+  mediaUrl: string; // uploaded photo, served from /uploads/images/...
+}
+
 export type ChallengeConfigFor<T extends TemplateType> = T extends "BOUNDING_BOX"
   ? BoundingBoxConfig
   : T extends "POINT"
@@ -96,7 +110,9 @@ export type ChallengeConfigFor<T extends TemplateType> = T extends "BOUNDING_BOX
       ? LabelingConfig
       : T extends "FREEFORM_DRAWING"
         ? FreeformDrawingConfig
-        : VideoRecordingConfig;
+        : T extends "PHOTO_CAPTURE"
+          ? PhotoCaptureConfig
+          : VideoRecordingConfig;
 
 export type ChallengeAnswerFor<T extends TemplateType> = T extends "BOUNDING_BOX"
   ? BoundingBoxAnswer
@@ -106,21 +122,25 @@ export type ChallengeAnswerFor<T extends TemplateType> = T extends "BOUNDING_BOX
       ? LabelingAnswer
       : T extends "FREEFORM_DRAWING"
         ? FreeformDrawingAnswer
-        : VideoRecordingAnswer;
+        : T extends "PHOTO_CAPTURE"
+          ? PhotoCaptureAnswer
+          : VideoRecordingAnswer;
 
 export type AnyChallengeConfig =
   | BoundingBoxConfig
   | PointConfig
   | LabelingConfig
   | FreeformDrawingConfig
-  | VideoRecordingConfig;
+  | VideoRecordingConfig
+  | PhotoCaptureConfig;
 
 export type AnyChallengeAnswer =
   | BoundingBoxAnswer
   | PointAnswer
   | LabelingAnswer
   | FreeformDrawingAnswer
-  | VideoRecordingAnswer;
+  | VideoRecordingAnswer
+  | PhotoCaptureAnswer;
 
 // One ChallengeItem as handed to a capture component: the item's own media plus
 // the parsed (not raw JSON string) challenge-level config and prompt.

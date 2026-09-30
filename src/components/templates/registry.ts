@@ -6,6 +6,7 @@ import PointCapture from "./PointCapture";
 import LabelingCapture from "./LabelingCapture";
 import FreeformDrawingCapture from "./FreeformDrawingCapture";
 import VideoRecordingCapture from "./VideoRecordingCapture";
+import PhotoCaptureCapture from "./PhotoCaptureCapture";
 
 // The feed never branches on template type itself — it just looks up the
 // right capture component here. Adding a new template type means adding one
@@ -16,4 +17,5 @@ export const CAPTURE_COMPONENTS: Record<TemplateType, ComponentType<CaptureProps
   LABELING: LabelingCapture,
   FREEFORM_DRAWING: FreeformDrawingCapture,
   VIDEO_RECORDING: VideoRecordingCapture,
+  PHOTO_CAPTURE: PhotoCaptureCapture,
 };

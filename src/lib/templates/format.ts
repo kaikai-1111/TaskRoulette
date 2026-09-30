@@ -30,6 +30,8 @@ export function formatAnswerSummary(templateType: TemplateType, raw: string): st
       const ms = typeof a.durationMs === "number" ? a.durationMs : 0;
       return `video (${(ms / 1000).toFixed(1)}s)`;
     }
+    case "PHOTO_CAPTURE":
+      return "photo";
     default:
       return raw;
   }
@@ -45,6 +47,15 @@ export function drawingStrokes(raw: string): [number, number][][] | null {
 }
 
 export function videoAnswerUrl(raw: string): string | null {
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return typeof parsed.mediaUrl === "string" ? parsed.mediaUrl : null;
+  } catch {
+    return null;
+  }
+}
+
+export function photoAnswerUrl(raw: string): string | null {
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     return typeof parsed.mediaUrl === "string" ? parsed.mediaUrl : null;

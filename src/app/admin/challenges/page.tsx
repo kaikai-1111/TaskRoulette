@@ -48,7 +48,7 @@ export default async function AdminChallengesPage() {
                     )}
                   </div>
                   <p className="text-xs text-black/50 dark:text-white">
-                    {c.templateType.toLowerCase()} · {c.category.toLowerCase()} ·{" "}
+                    {c.templateType.toLowerCase()} · {c.category.toLowerCase()} · {c.purpose.toLowerCase()} ·{" "}
                     {c._count.submissions} / {totalTarget} responses · {c.items.length} item(s) · by{" "}
                     {c.creator.displayName ?? c.creator.email ?? c.creator.id.slice(0, 8)} ·{" "}
                     {new Date(c.createdAt).toLocaleDateString()}

@@ -38,7 +38,8 @@ export default async function MyChallengesPage() {
                     </span>
                   </div>
                   <div className="text-sm text-black/50 dark:text-white mt-1">
-                    {c._count.submissions} / {totalTarget} responses · {c.templateType.toLowerCase()}
+                    {c._count.submissions} / {totalTarget} responses · {c.templateType.toLowerCase()} ·{" "}
+                    {c.purpose.toLowerCase()}
                   </div>
                 </Link>
               </li>

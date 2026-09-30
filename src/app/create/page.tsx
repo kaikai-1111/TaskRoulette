@@ -33,12 +33,25 @@ const ITEMS_COPY: Record<TemplateType, { label: string; placeholder: string }> =
     label: "Things to record, one per line",
     placeholder: "say today's date out loud\nshow us something blue nearby",
   },
+  PHOTO_CAPTURE: {
+    label: "Things to photograph, one per line",
+    placeholder: "your desk right now\na plant near you",
+  },
 };
+
+// Purpose is an independent, creator-overridable tag (annotating existing
+// data vs. contributing new data) — this just picks a sensible starting
+// point whenever the task type changes.
+const COLLECTING_TEMPLATE_TYPES: TemplateType[] = ["VIDEO_RECORDING", "PHOTO_CAPTURE"];
+function defaultPurposeFor(t: TemplateType): "ANNOTATING" | "COLLECTING" {
+  return COLLECTING_TEMPLATE_TYPES.includes(t) ? "COLLECTING" : "ANNOTATING";
+}
 
 export default function CreatePage() {
   const router = useRouter();
   const [templateType, setTemplateType] = useState<TemplateType>("LABELING");
   const [category, setCategory] = useState<"FUN" | "PRETRAINING">("FUN");
+  const [purpose, setPurpose] = useState<"ANNOTATING" | "COLLECTING">(defaultPurposeFor("LABELING"));
   const [prompt, setPrompt] = useState("");
   const [targetLabel, setTargetLabel] = useState(""); // BOUNDING_BOX / POINT only
   const [optionsInput, setOptionsInput] = useState(""); // LABELING only, comma-separated; blank = free text
@@ -89,7 +102,7 @@ export default function CreatePage() {
       config = {
         options: optionsInput.trim() ? optionsInput.split(",").map((o) => o.trim()).filter(Boolean) : null,
       };
-    } else if (templateType === "FREEFORM_DRAWING") {
+    } else if (templateType === "FREEFORM_DRAWING" || templateType === "PHOTO_CAPTURE") {
       config = {};
     } else {
       config = { maxDurationSeconds };
@@ -103,6 +116,7 @@ export default function CreatePage() {
     const result = await createChallenge({
       templateType,
       category,
+      purpose,
       prompt,
       config,
       timeLimitSeconds,
@@ -187,7 +201,10 @@ export default function CreatePage() {
               <button
                 type="button"
                 key={t.value}
-                onClick={() => setTemplateType(t.value)}
+                onClick={() => {
+                  setTemplateType(t.value);
+                  setPurpose(defaultPurposeFor(t.value));
+                }}
                 className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
                   templateType === t.value
                     ? "border-blue-500 bg-blue-500/10"
@@ -214,7 +231,9 @@ export default function CreatePage() {
                   ? "e.g. Draw it"
                   : templateType === "VIDEO_RECORDING"
                     ? "e.g. Show us your setup"
-                    : "e.g. Is this a good pun?"
+                    : templateType === "PHOTO_CAPTURE"
+                      ? "e.g. Show us what's on your desk"
+                      : "e.g. Is this a good pun?"
             }
             className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
           />
@@ -272,6 +291,13 @@ export default function CreatePage() {
               ))}
             </select>
           </label>
+        )}
+
+        {templateType === "PHOTO_CAPTURE" && (
+          <div className="rounded-lg bg-amber-400/10 border border-amber-400/30 px-3 py-2 text-xs text-black/60 dark:text-white">
+            Doers see an explicit camera-consent screen before taking a photo. Each item below is a
+            separate thing to photograph — doers take one photo per item, not a batch.
+          </div>
         )}
 
         {templateType === "LABELING" && (
@@ -368,6 +394,35 @@ export default function CreatePage() {
           />
           This is for training my own model (vs. just for fun)
         </label>
+
+        <fieldset className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium">This challenge is</label>
+          <div className="flex gap-2 text-sm">
+            <button
+              type="button"
+              onClick={() => setPurpose("ANNOTATING")}
+              className={`rounded-full px-3 py-1 border ${
+                purpose === "ANNOTATING" ? "border-blue-500 bg-blue-500/10" : "border-black/10 dark:border-white/15"
+              }`}
+            >
+              Annotating
+            </button>
+            <button
+              type="button"
+              onClick={() => setPurpose("COLLECTING")}
+              className={`rounded-full px-3 py-1 border ${
+                purpose === "COLLECTING" ? "border-blue-500 bg-blue-500/10" : "border-black/10 dark:border-white/15"
+              }`}
+            >
+              Collecting
+            </button>
+          </div>
+          <span className="text-xs text-black/40 dark:text-white">
+            {purpose === "ANNOTATING"
+              ? "Doers label or mark up data you've already supplied."
+              : "Doers contribute new data (photos, video, ...) rather than annotate existing data."}
+          </span>
+        </fieldset>
 
         <div className="rounded-lg bg-black/5 dark:bg-white/10 px-3 py-2 text-sm flex justify-between">
           <span>Total cost</span>

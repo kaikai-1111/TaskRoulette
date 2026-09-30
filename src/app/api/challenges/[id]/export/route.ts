@@ -13,6 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     prompt: challenge.prompt,
     templateType: challenge.templateType,
     category: challenge.category,
+    purpose: challenge.purpose,
     config: JSON.parse(challenge.config),
     status: challenge.status,
     items: challenge.items.map((item) => ({

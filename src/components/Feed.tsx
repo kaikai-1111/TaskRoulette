@@ -55,11 +55,12 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
   }, []);
 
   // Countdown; auto-skip to the next item when time runs out. Video recording
-  // manages its own internal timer (consent + record + review + upload can
-  // easily run past a normal answer window) so it opts out of this one.
+  // and photo capture manage their own pacing (camera permission + consent +
+  // capture + upload can easily run past a normal answer window) so they opt
+  // out of this one.
   useEffect(() => {
     if (!item) return;
-    if (item.templateType === "VIDEO_RECORDING") return;
+    if (item.templateType === "VIDEO_RECORDING" || item.templateType === "PHOTO_CAPTURE") return;
     if (timeLeft <= 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       loadNext();
@@ -162,7 +163,9 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
     <div className="flex flex-1 flex-col">
       <div className="relative flex items-center justify-between px-4 py-2 text-sm">
         <span className="font-medium">
-          {item.templateType === "VIDEO_RECORDING" ? "" : `${timeLeft}s`}
+          {item.templateType === "VIDEO_RECORDING" || item.templateType === "PHOTO_CAPTURE"
+            ? ""
+            : `${timeLeft}s`}
         </span>
         <div className="flex items-center gap-3">
           {reportSent ? (
@@ -197,7 +200,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
           </div>
         )}
       </div>
-      {item.templateType !== "VIDEO_RECORDING" && (
+      {item.templateType !== "VIDEO_RECORDING" && item.templateType !== "PHOTO_CAPTURE" && (
         <div className="h-1 w-full bg-black/5 dark:bg-white/10">
           <div
             className="h-full bg-blue-500 transition-[width] duration-1000 ease-linear"

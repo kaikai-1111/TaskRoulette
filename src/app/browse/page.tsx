@@ -56,8 +56,15 @@ export default async function BrowsePage() {
                       &ldquo;{c.thumbnailText ?? c.prompt}&rdquo;
                     </p>
                   )}
-                  <span className="absolute top-1.5 left-1.5 rounded-full bg-black/60 text-white text-[10px] px-2 py-0.5 backdrop-blur">
-                    {TEMPLATE_LABELS[c.templateType]}
+                  <span className="absolute top-1.5 left-1.5 flex gap-1">
+                    <span className="rounded-full bg-black/60 text-white text-[10px] px-2 py-0.5 backdrop-blur">
+                      {TEMPLATE_LABELS[c.templateType]}
+                    </span>
+                    {c.purpose === "COLLECTING" && (
+                      <span className="rounded-full bg-orange-500/80 text-white text-[10px] px-2 py-0.5 backdrop-blur">
+                        collecting
+                      </span>
+                    )}
                   </span>
                   {c.isMine && (
                     <span className="absolute top-1.5 right-1.5 rounded-full bg-orange-500 text-white text-[10px] px-2 py-0.5">

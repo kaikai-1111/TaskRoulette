@@ -100,6 +100,7 @@ export interface TopChallenge {
   prompt: string;
   templateType: TemplateType;
   category: "FUN" | "PRETRAINING";
+  purpose: "ANNOTATING" | "COLLECTING";
   thumbnailUrl: string | null;
   thumbnailText: string | null;
   responseCount: number;
@@ -146,6 +147,7 @@ export async function getTopChallenges(): Promise<TopChallenge[]> {
       prompt: c.prompt,
       templateType: c.templateType as TemplateType,
       category: c.category as "FUN" | "PRETRAINING",
+      purpose: c.purpose as "ANNOTATING" | "COLLECTING",
       thumbnailUrl: c.items[0]?.mediaUrl ?? null,
       thumbnailText: c.items[0]?.mediaUrl ? null : (c.items[0]?.textContent ?? null),
       responseCount: c._count.submissions,
@@ -264,6 +266,7 @@ export interface CreateChallengeInput {
   templateType: TemplateType;
   prompt: string;
   category: "FUN" | "PRETRAINING";
+  purpose: "ANNOTATING" | "COLLECTING";
   config: unknown;
   timeLimitSeconds: number;
   targetResponsesPerItem: number;
@@ -322,6 +325,7 @@ export async function createChallenge(
           creatorId: user.id,
           templateType: input.templateType,
           category: input.category,
+          purpose: input.purpose,
           prompt: input.prompt.trim(),
           config: JSON.stringify(config),
           timeLimitSeconds: input.timeLimitSeconds,

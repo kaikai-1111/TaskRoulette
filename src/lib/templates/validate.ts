@@ -7,6 +7,7 @@ import type {
   FreeformDrawingAnswer,
   LabelingAnswer,
   LabelingConfig,
+  PhotoCaptureAnswer,
   PointAnswer,
   PointConfig,
   TemplateType,
@@ -29,6 +30,7 @@ export function validateConfig(templateType: TemplateType, config: unknown): Any
   if (templateType === "POINT") return requireTargetLabel(config, "Find-the-spot");
 
   if (templateType === "FREEFORM_DRAWING") return {};
+  if (templateType === "PHOTO_CAPTURE") return {};
 
   if (templateType === "VIDEO_RECORDING") {
     const c = config as Partial<VideoRecordingConfig>;
@@ -111,6 +113,14 @@ export function validateAnswer(
       throw new ValidationError("Draw something before submitting.");
     }
     return { strokes: a.strokes as [number, number][][] };
+  }
+
+  if (templateType === "PHOTO_CAPTURE") {
+    const a = answer as Partial<PhotoCaptureAnswer>;
+    if (typeof a.mediaUrl !== "string" || !a.mediaUrl.trim()) {
+      throw new ValidationError("Photo didn't upload correctly — try again.");
+    }
+    return { mediaUrl: a.mediaUrl };
   }
 
   if (templateType === "VIDEO_RECORDING") {

@@ -18,11 +18,22 @@ enum TemplateType {
   LABELING
   FREEFORM_DRAWING
   VIDEO_RECORDING
+  PHOTO_CAPTURE
 }
 
 enum ChallengeCategory {
   FUN
   PRETRAINING
+}
+
+// Independent of category (fun/pretraining) and template type: is the doer
+// marking up data that already exists (LABELING, BOUNDING_BOX, ...), or
+// contributing new data (PHOTO_CAPTURE, VIDEO_RECORDING, ...)? Creator-set,
+// defaulted from template type but overridable, since e.g. a LABELING
+// challenge whose "items" are blank prompts can still be a collection task.
+enum ChallengePurpose {
+  ANNOTATING
+  COLLECTING
 }
 
 enum ChallengeStatus {
@@ -94,6 +105,7 @@ model Challenge {
   creator                User              @relation(fields: [creatorId], references: [id])
   templateType           TemplateType
   category               ChallengeCategory @default(FUN)
+  purpose                ChallengePurpose  @default(ANNOTATING)
   prompt                 String // instruction shown to the doer, e.g. "draw a box around the cat"
   config                 String // JSON blob, shape depends on templateType (see lib/templates)
   timeLimitSeconds       Int               @default(30)

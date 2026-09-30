@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getChallengeResults } from "@/app/actions";
-import { drawingStrokes, formatAnswerSummary, videoAnswerUrl } from "@/lib/templates/format";
+import { drawingStrokes, formatAnswerSummary, photoAnswerUrl, videoAnswerUrl } from "@/lib/templates/format";
 import type { TemplateType } from "@/lib/templates/types";
 
 export default async function ChallengeResultsPage({
@@ -31,7 +31,7 @@ export default async function ChallengeResultsPage({
       </div>
       <p className="text-sm text-black/50 dark:text-white mb-6">
         {totalSubmissions} / {totalTarget} responses · {challenge.templateType.toLowerCase()} ·{" "}
-        {challenge.items.length} item(s)
+        {challenge.purpose.toLowerCase()} · {challenge.items.length} item(s)
       </p>
 
       <a
@@ -73,6 +73,20 @@ export default async function ChallengeResultsPage({
                   ) : (
                     <span key={s.id} className="text-xs text-red-500">
                       broken recording
+                    </span>
+                  );
+                })}
+              </div>
+            ) : challenge.templateType === "PHOTO_CAPTURE" ? (
+              <div className="flex flex-wrap gap-2">
+                {item.submissions.map((s) => {
+                  const url = photoAnswerUrl(s.answer);
+                  return url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={s.id} src={url} alt="" className="h-32 rounded object-cover" />
+                  ) : (
+                    <span key={s.id} className="text-xs text-red-500">
+                      broken photo
                     </span>
                   );
                 })}
