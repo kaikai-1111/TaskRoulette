@@ -74,6 +74,7 @@ export default async function BrowsePage() {
                 </div>
                 <div className="p-2.5">
                   <p className="text-sm font-medium truncate">{c.prompt}</p>
+                  <p className="text-[11px] text-black/40 dark:text-white truncate">by {c.creatorName}</p>
                   <div className="mt-1.5 h-1 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
                     <div className="h-full bg-blue-500" style={{ width: `${pct}%` }} />
                   </div>

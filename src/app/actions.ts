@@ -101,6 +101,7 @@ export interface TopChallenge {
   templateType: TemplateType;
   category: "FUN" | "PRETRAINING";
   purpose: "ANNOTATING" | "COLLECTING";
+  creatorName: string;
   thumbnailUrl: string | null;
   thumbnailText: string | null;
   responseCount: number;
@@ -134,6 +135,7 @@ export async function getTopChallenges(): Promise<TopChallenge[]> {
     where: { status: "ACTIVE" },
     include: {
       items: { orderBy: { order: "asc" }, take: 1 },
+      creator: { select: { displayName: true, username: true } },
       _count: { select: { submissions: { where: { status: { not: "REMOVED" } } }, items: true } },
     },
     orderBy: [{ submissions: { _count: "desc" } }, { createdAt: "desc" }],
@@ -148,6 +150,10 @@ export async function getTopChallenges(): Promise<TopChallenge[]> {
       templateType: c.templateType as TemplateType,
       category: c.category as "FUN" | "PRETRAINING",
       purpose: c.purpose as "ANNOTATING" | "COLLECTING",
+      // Never fall back to email here — this is public-facing. Admins who
+      // post without a full account (see createChallenge's admin bypass)
+      // have neither, so "anonymous" is the last resort.
+      creatorName: c.creator.displayName ?? c.creator.username ?? "anonymous",
       thumbnailUrl: c.items[0]?.mediaUrl ?? null,
       thumbnailText: c.items[0]?.mediaUrl ? null : (c.items[0]?.textContent ?? null),
       responseCount: c._count.submissions,
