@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  changePassword,
   getAccountStats,
   getAccountStatus,
-  regenerateRecoveryCode,
   setAvatarUrl,
   signOut,
   updateDisplayName,
@@ -42,17 +42,30 @@ export default function AccountPage() {
   const [nameInput, setNameInput] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
   const [savingName, setSavingName] = useState(false);
-  const [newRecoveryCode, setNewRecoveryCode] = useState<string | null>(null);
-  const [regenerating, setRegenerating] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [currentPasswordInput, setCurrentPasswordInput] = useState("");
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  async function handleRegenerate() {
-    setRegenerating(true);
-    const result = await regenerateRecoveryCode();
-    setRegenerating(false);
-    if (result.ok) setNewRecoveryCode(result.recoveryCode);
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setPasswordError(null);
+    setSavingPassword(true);
+    const result = await changePassword(currentPasswordInput, newPasswordInput);
+    setSavingPassword(false);
+    if (!result.ok) {
+      setPasswordError(result.error);
+      return;
+    }
+    setCurrentPasswordInput("");
+    setNewPasswordInput("");
+    setChangingPassword(false);
+    setPasswordChanged(true);
   }
 
   async function handleSignOut() {
@@ -246,27 +259,65 @@ export default function AccountPage() {
           )}
 
           <div className="flex flex-col gap-2 border-t border-black/10 dark:border-white/15 pt-4">
-            {newRecoveryCode ? (
-              <>
-                <p className="text-sm">
-                  Save this recovery code somewhere safe — it&apos;s shown{" "}
-                  <span className="font-semibold">only once</span>.
-                </p>
-                <div className="rounded-lg bg-black/5 dark:bg-white/10 px-4 py-3 text-center font-mono text-lg tracking-wide select-all">
-                  {newRecoveryCode}
+            {changingPassword ? (
+              <form onSubmit={handleChangePassword} className="flex flex-col gap-2">
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-sm font-medium">Current password</span>
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={currentPasswordInput}
+                    onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                    className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+                  />
+                </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-sm font-medium">New password</span>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    value={newPasswordInput}
+                    onChange={(e) => setNewPasswordInput(e.target.value)}
+                    placeholder="At least 8 characters"
+                    className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+                  />
+                </label>
+                {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={savingPassword}
+                    className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+                  >
+                    {savingPassword ? "Saving…" : "Save"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChangingPassword(false);
+                      setCurrentPasswordInput("");
+                      setNewPasswordInput("");
+                      setPasswordError(null);
+                    }}
+                    className="rounded-full border border-black/10 dark:border-white/15 px-4 py-1.5 text-sm"
+                  >
+                    Cancel
+                  </button>
                 </div>
-              </>
+              </form>
             ) : (
               <>
-                <p className="text-sm text-black/50 dark:text-white">
-                  Lost your recovery code? Generating a new one invalidates the old code.
-                </p>
+                {passwordChanged && <p className="text-sm text-blue-600 dark:text-blue-400">Password changed.</p>}
                 <button
-                  onClick={handleRegenerate}
-                  disabled={regenerating}
-                  className="self-start text-sm text-blue-600 dark:text-blue-400 underline disabled:opacity-40"
+                  onClick={() => {
+                    setChangingPassword(true);
+                    setPasswordChanged(false);
+                  }}
+                  className="self-start text-sm text-blue-600 dark:text-blue-400 underline"
                 >
-                  {regenerating ? "Generating…" : "Generate a new recovery code"}
+                  Change password
                 </button>
               </>
             )}
@@ -275,7 +326,7 @@ export default function AccountPage() {
           <p className="text-xs text-black/40 dark:text-white">
             Signing in on another device?{" "}
             <Link href="/restore" className="underline">
-              Restore your account there
+              Sign in there
             </Link>
             .
           </p>

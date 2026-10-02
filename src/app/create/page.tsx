@@ -318,7 +318,7 @@ function CreatePageInner() {
           Doing challenges never requires this — only posting one does, so there&apos;s a real
           identity behind the data you collect.
         </p>
-        <CreateAccountForm continueLabel="Continue to post" onCreated={() => setHasAccount(true)} />
+        <CreateAccountForm onCreated={() => setHasAccount(true)} />
       </div>
     );
   }

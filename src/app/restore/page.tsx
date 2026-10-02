@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { restoreAccount } from "@/app/account/actions";
+import { signIn } from "@/app/account/actions";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default function RestorePage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -21,7 +21,7 @@ export default function RestorePage() {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    const result = await restoreAccount(email, code);
+    const result = await signIn(email, password);
     setSubmitting(false);
     if (!result.ok) {
       setError(result.error);
@@ -32,7 +32,7 @@ export default function RestorePage() {
 
   return (
     <div className="mx-auto w-full max-w-sm px-4 py-8">
-      <h1 className="text-2xl font-bold mb-1">Restore account</h1>
+      <h1 className="text-2xl font-bold mb-1">Sign in</h1>
       <p className="text-sm text-black/50 dark:text-white mb-6">
         Bring a claimed account&apos;s credits to this device. This replaces this browser&apos;s
         current credit balance.
@@ -43,7 +43,7 @@ export default function RestorePage() {
           <GoogleSignInButton onSuccess={goHome} />
           <div className="flex items-center gap-3 text-xs text-black/40 dark:text-white my-4">
             <div className="h-px flex-1 bg-black/10 dark:bg-white/15" />
-            or use your recovery code
+            or use your password
             <div className="h-px flex-1 bg-black/10 dark:bg-white/15" />
           </div>
         </>
@@ -59,11 +59,13 @@ export default function RestorePage() {
           className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
         />
         <input
+          type="password"
           required
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="Recovery code"
-          className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 font-mono"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
         />
         {error && <p className="text-sm text-red-500">{error}</p>}
         <button
@@ -71,7 +73,7 @@ export default function RestorePage() {
           disabled={submitting}
           className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white px-6 py-2.5 font-semibold disabled:opacity-40"
         >
-          {submitting ? "Restoring…" : "Restore"}
+          {submitting ? "Signing in…" : "Sign in"}
         </button>
       </form>
     </div>

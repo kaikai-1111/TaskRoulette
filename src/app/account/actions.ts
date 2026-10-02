@@ -6,7 +6,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, ANON_COOKIE_NAME } from "@/lib/identity";
 import { isAdmin } from "@/lib/admin";
-import { generateRecoveryCode, hashRecoveryCode } from "@/lib/recovery";
+import { hashPassword, verifyPassword, MIN_PASSWORD_LENGTH } from "@/lib/password";
 import { isValidUsername, normalizeUsername, USERNAME_HINT } from "@/lib/username";
 
 export async function getAccountStatus() {
@@ -27,8 +27,8 @@ export async function getAccountStatus() {
 // session token to invalidate (the anon_token cookie IS the identity, with
 // or without an account attached), so "signing out" means letting
 // proxy.ts mint a fresh anonymous one on the next request. The account
-// itself isn't touched; signing back in is /restore with email + recovery
-// code (or Google).
+// itself isn't touched; signing back in is /restore with email + password
+// (or Google).
 export async function signOut() {
   const cookieStore = await cookies();
   cookieStore.delete(ANON_COOKIE_NAME);
@@ -66,13 +66,14 @@ export async function getAccountStats() {
   };
 }
 
-// Creates the username/email/recoveryCode identity needed to post a
-// challenge. Doing challenges never requires this — only posting does.
+// Creates the username/email/password identity needed to post a challenge.
+// Doing challenges never requires this — only posting does.
 export async function createAccount(input: {
   email: string;
   username: string;
   displayName: string;
-}): Promise<{ ok: true; recoveryCode: string } | { ok: false; error: string }> {
+  password: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
   const email = input.email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { ok: false, error: "Enter a valid email address." };
@@ -83,15 +84,19 @@ export async function createAccount(input: {
     return { ok: false, error: `Invalid username. ${USERNAME_HINT}` };
   }
 
+  if (input.password.length < MIN_PASSWORD_LENGTH) {
+    return { ok: false, error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` };
+  }
+
   const displayName = input.displayName.trim().slice(0, 40) || username;
 
   const user = await getCurrentUser();
-  const code = generateRecoveryCode();
+  const passwordHash = await hashPassword(input.password);
 
   try {
     await prisma.user.update({
       where: { id: user.id },
-      data: { email, username, displayName, recoveryCodeHash: hashRecoveryCode(code) },
+      data: { email, username, displayName, passwordHash },
     });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
@@ -102,24 +107,29 @@ export async function createAccount(input: {
     return { ok: false, error: "Couldn't create the account — try again." };
   }
 
-  return { ok: true, recoveryCode: code };
+  return { ok: true };
 }
 
-// Rotates the recovery code on an already-created account. Invalidates the
-// old code immediately (it's a hash overwrite, not an additional valid one).
-export async function regenerateRecoveryCode(): Promise<
-  { ok: true; recoveryCode: string } | { ok: false; error: string }
-> {
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const user = await getCurrentUser();
   if (!user.email || !user.username) {
     return { ok: false, error: "Create an account first." };
   }
-  const code = generateRecoveryCode();
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { recoveryCodeHash: hashRecoveryCode(code) },
-  });
-  return { ok: true, recoveryCode: code };
+  // No password set yet (e.g. a Google-only account) — let them set an
+  // initial one without proving a current password that doesn't exist.
+  if (user.passwordHash) {
+    const valid = await verifyPassword(currentPassword, user.passwordHash);
+    if (!valid) return { ok: false, error: "Current password is wrong." };
+  }
+  if (newPassword.length < MIN_PASSWORD_LENGTH) {
+    return { ok: false, error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` };
+  }
+  const passwordHash = await hashPassword(newPassword);
+  await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+  return { ok: true };
 }
 
 export async function updateDisplayName(
@@ -133,15 +143,15 @@ export async function updateDisplayName(
 }
 
 // Points this browser's anon_token cookie at the account matching
-// email + recovery code, so its credits (and history) become "this device's".
-export async function restoreAccount(
+// email + password, so its credits (and history) become "this device's".
+export async function signIn(
   email: string,
-  code: string
+  password: string
 ): Promise<{ ok: true; credits: number } | { ok: false; error: string }> {
   const trimmed = email.trim().toLowerCase();
   const user = await prisma.user.findUnique({ where: { email: trimmed } });
-  if (!user || !user.recoveryCodeHash || user.recoveryCodeHash !== hashRecoveryCode(code)) {
-    return { ok: false, error: "No account matches that email + recovery code." };
+  if (!user || !user.passwordHash || !(await verifyPassword(password, user.passwordHash))) {
+    return { ok: false, error: "Wrong email or password." };
   }
 
   const cookieStore = await cookies();

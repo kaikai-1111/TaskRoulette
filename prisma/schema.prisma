@@ -72,14 +72,15 @@ model User {
   credits     Int      @default(20)
   createdAt   DateTime @default(now())
 
-  // "Create an account" (recovery-code based, no password/email verification
-  // in v1): username, email and recoveryCodeHash are all set together at
-  // creation. recoveryCodeHash is a sha256 of the one-time code shown to the
-  // user; the plaintext code is never stored. Posting a challenge requires
-  // all three to be set — doing challenges never does.
-  username         String? @unique
-  email            String? @unique
-  recoveryCodeHash String?
+  // "Create an account" (no email verification in v1): username, email and
+  // passwordHash are all set together at creation. passwordHash is a scrypt
+  // hash (see lib/password.ts) — the plaintext password is never stored.
+  // Posting a challenge requires all three to be set — doing challenges
+  // never does. Accounts created purely via Google sign-in (no password set
+  // at creation) leave this null — they sign in via Google only.
+  username     String? @unique
+  email        String? @unique
+  passwordHash String?
 
   // "Continue with Google" — an alternative to the recovery-code flow above.
   // googleId is the token's stable `sub` claim; email is shared with the
