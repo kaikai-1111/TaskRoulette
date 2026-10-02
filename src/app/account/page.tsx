@@ -2,15 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   getAccountStats,
   getAccountStatus,
   regenerateRecoveryCode,
   setAvatarUrl,
+  signOut,
   updateDisplayName,
 } from "@/app/account/actions";
 import CreateAccountForm from "@/components/CreateAccountForm";
 import { useIdentity } from "@/components/IdentityProvider";
+import { useCredits } from "@/components/CreditsProvider";
 
 type Status = {
   email: string | null;
@@ -30,7 +33,9 @@ type Stats = {
 };
 
 export default function AccountPage() {
+  const router = useRouter();
   const { refresh: refreshIdentity } = useIdentity();
+  const { refresh: refreshCredits } = useCredits();
   const [status, setStatus] = useState<Status | undefined>(undefined);
   const [stats, setStats] = useState<Stats | undefined>(undefined);
   const [editingName, setEditingName] = useState(false);
@@ -48,6 +53,14 @@ export default function AccountPage() {
     const result = await regenerateRecoveryCode();
     setRegenerating(false);
     if (result.ok) setNewRecoveryCode(result.recoveryCode);
+  }
+
+  async function handleSignOut() {
+    await signOut();
+    refreshIdentity();
+    refreshCredits();
+    router.push("/");
+    router.refresh();
   }
 
   useEffect(() => {
@@ -266,6 +279,13 @@ export default function AccountPage() {
             </Link>
             .
           </p>
+
+          <button
+            onClick={handleSignOut}
+            className="self-start text-sm text-red-500 underline"
+          >
+            Sign out
+          </button>
         </div>
       )}
     </div>

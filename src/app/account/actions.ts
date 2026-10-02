@@ -23,6 +23,17 @@ export async function getAccountStatus() {
   };
 }
 
+// Clears this device's identity cookie entirely — there's no separate
+// session token to invalidate (the anon_token cookie IS the identity, with
+// or without an account attached), so "signing out" means letting
+// proxy.ts mint a fresh anonymous one on the next request. The account
+// itself isn't touched; signing back in is /restore with email + recovery
+// code (or Google).
+export async function signOut() {
+  const cookieStore = await cookies();
+  cookieStore.delete(ANON_COOKIE_NAME);
+}
+
 export async function setAvatarUrl(
   url: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
