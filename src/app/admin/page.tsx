@@ -23,6 +23,9 @@ export default async function AdminPage() {
           <Link href="/admin/challenges" className="text-black/50 dark:text-white underline">
             All challenges
           </Link>
+          <Link href="/admin/admins" className="text-black/50 dark:text-white underline">
+            Admins
+          </Link>
           <form action={adminLogoutAction}>
             <button className="text-black/50 dark:text-white underline">Log out</button>
           </form>

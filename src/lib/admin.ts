@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
+import { getCurrentUser } from "./identity";
 
 const COOKIE_NAME = "admin_session";
 
@@ -10,7 +11,7 @@ function expectedCookieValue(): string {
   return createHmac("sha256", password).update("quicktask-admin").digest("hex");
 }
 
-export async function isAdmin(): Promise<boolean> {
+async function hasAdminCookie(): Promise<boolean> {
   if (!process.env.ADMIN_PASSWORD) return false;
   const cookieStore = await cookies();
   const value = cookieStore.get(COOKIE_NAME)?.value;
@@ -19,6 +20,16 @@ export async function isAdmin(): Promise<boolean> {
   const a = Buffer.from(value);
   const b = Buffer.from(expected);
   return a.length === b.length && timingSafeEqual(a, b);
+}
+
+// Two independent ways in: the shared ADMIN_PASSWORD cookie (the original
+// bootstrap mechanism — always works, no account needed), or a per-account
+// isAdmin flag (see grantAdminAction) granted by an existing admin to a
+// specific username, no secret-sharing required.
+export async function isAdmin(): Promise<boolean> {
+  if (await hasAdminCookie()) return true;
+  const user = await getCurrentUser();
+  return user.isAdmin;
 }
 
 export async function attemptAdminLogin(password: string): Promise<boolean> {

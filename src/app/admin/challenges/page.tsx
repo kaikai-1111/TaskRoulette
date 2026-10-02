@@ -19,9 +19,14 @@ export default async function AdminChallengesPage() {
     <div className="mx-auto w-full max-w-3xl px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">All challenges</h1>
-        <Link href="/admin" className="text-sm text-black/50 dark:text-white underline">
-          Moderation queue
-        </Link>
+        <div className="flex items-center gap-4 text-sm">
+          <Link href="/admin" className="text-black/50 dark:text-white underline">
+            Moderation queue
+          </Link>
+          <Link href="/admin/admins" className="text-black/50 dark:text-white underline">
+            Admins
+          </Link>
+        </div>
       </div>
 
       {challenges.length === 0 ? (

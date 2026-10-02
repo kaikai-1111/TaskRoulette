@@ -70,6 +70,38 @@ export async function setChallengeStatusAction(challengeId: string, status: "ACT
   revalidatePath("/admin/challenges");
 }
 
+export async function getAdmins() {
+  await requireAdmin();
+  return prisma.user.findMany({
+    where: { isAdmin: true },
+    select: { id: true, username: true, displayName: true, email: true },
+    orderBy: { username: "asc" },
+  });
+}
+
+export async function grantAdminAction(
+  _prevState: { error: string } | null,
+  formData: FormData
+): Promise<{ error: string } | null> {
+  await requireAdmin();
+  const username = String(formData.get("username") ?? "").trim().toLowerCase();
+  if (!username) return { error: "Enter a username." };
+
+  const user = await prisma.user.findUnique({ where: { username } });
+  if (!user) return { error: `No account with username "${username}".` };
+  if (user.isAdmin) return { error: `@${username} is already an admin.` };
+
+  await prisma.user.update({ where: { id: user.id }, data: { isAdmin: true } });
+  revalidatePath("/admin/admins");
+  return null;
+}
+
+export async function revokeAdminAction(userId: string) {
+  await requireAdmin();
+  await prisma.user.update({ where: { id: userId }, data: { isAdmin: false } });
+  revalidatePath("/admin/admins");
+}
+
 export async function removeSubmissionAction(submissionId: string) {
   await requireAdmin();
   await prisma.$transaction(async (tx) => {

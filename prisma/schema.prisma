@@ -93,6 +93,13 @@ model User {
   // Google avatar; a viewer with no account/no upload falls back to initials.
   avatarUrl String?
 
+  // Account-based admin — grants the same moderation/posting privileges as
+  // the shared ADMIN_PASSWORD cookie (see lib/admin.ts's isAdmin(), which
+  // checks both), but tied to one person's account instead of one secret
+  // everyone shares. Requires a full account (username/email) since it's
+  // granted by username, see grantAdminAction in app/admin/actions.ts.
+  isAdmin Boolean @default(false)
+
   // Self-attested age/ToS gate, shown once before first use of the app.
   ageAttested Boolean @default(false)
 
