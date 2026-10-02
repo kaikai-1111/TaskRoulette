@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   changePassword,
+  deleteAccount,
   getAccountStats,
   getAccountStatus,
   setAvatarUrl,
@@ -51,6 +52,10 @@ export default function AccountPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deletePasswordInput, setDeletePasswordInput] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -70,6 +75,22 @@ export default function AccountPage() {
 
   async function handleSignOut() {
     await signOut();
+    refreshIdentity();
+    refreshCredits();
+    router.push("/");
+    router.refresh();
+  }
+
+  async function handleDeleteAccount(e: React.FormEvent) {
+    e.preventDefault();
+    setDeleteError(null);
+    setDeleting(true);
+    const result = await deleteAccount(deletePasswordInput);
+    setDeleting(false);
+    if (!result.ok) {
+      setDeleteError(result.error);
+      return;
+    }
     refreshIdentity();
     refreshCredits();
     router.push("/");
@@ -337,6 +358,59 @@ export default function AccountPage() {
           >
             Sign out
           </button>
+
+          <div className="flex flex-col gap-2 border-t border-black/10 dark:border-white/15 pt-4">
+            {deletingAccount ? (
+              <form onSubmit={handleDeleteAccount} className="flex flex-col gap-2">
+                <p className="text-sm text-black/60 dark:text-white">
+                  This removes your username, email, password, display name, and photo — freeing
+                  your username and email for reuse. Challenges you&apos;ve posted and responses
+                  you&apos;ve given stay in place, same as any anonymous contribution. This device
+                  signs out immediately; there&apos;s no undo.
+                </p>
+                {!!status.email && (
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-sm font-medium">Password</span>
+                    <input
+                      type="password"
+                      autoComplete="current-password"
+                      value={deletePasswordInput}
+                      onChange={(e) => setDeletePasswordInput(e.target.value)}
+                      className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+                    />
+                  </label>
+                )}
+                {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={deleting}
+                    className="rounded-full bg-red-500 hover:bg-red-600 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+                  >
+                    {deleting ? "Deleting…" : "Delete my account"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeletingAccount(false);
+                      setDeletePasswordInput("");
+                      setDeleteError(null);
+                    }}
+                    className="rounded-full border border-black/10 dark:border-white/15 px-4 py-1.5 text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                onClick={() => setDeletingAccount(true)}
+                className="self-start text-sm text-red-500 underline"
+              >
+                Delete account
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

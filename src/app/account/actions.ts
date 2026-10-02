@@ -132,6 +132,44 @@ export async function changePassword(
   return { ok: true };
 }
 
+// Deletes the *account* (username/email/password/profile/admin status),
+// not the underlying device identity or its history — challenges posted
+// and responses given stay in place as anonymous contributions (same as
+// any other anonymous visitor's), since other people's response counts
+// and this platform's collected data shouldn't disappear because one
+// contributor deleted their account. Also signs this device out, since
+// the account it was signed into no longer exists.
+export async function deleteAccount(
+  password: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getCurrentUser();
+  if (!user.email || !user.username) {
+    return { ok: false, error: "No account to delete." };
+  }
+  if (user.passwordHash) {
+    const valid = await verifyPassword(password, user.passwordHash);
+    if (!valid) return { ok: false, error: "Wrong password." };
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      username: null,
+      email: null,
+      passwordHash: null,
+      displayName: null,
+      avatarUrl: null,
+      googleId: null,
+      isAdmin: false,
+    },
+  });
+
+  const cookieStore = await cookies();
+  cookieStore.delete(ANON_COOKIE_NAME);
+
+  return { ok: true };
+}
+
 export async function updateDisplayName(
   displayName: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
