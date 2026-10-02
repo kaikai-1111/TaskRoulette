@@ -70,6 +70,74 @@ export async function setChallengeStatusAction(challengeId: string, status: "ACT
   revalidatePath("/admin/challenges");
 }
 
+// The only place first/last names ever leave the server — gated on
+// requireAdmin like everything else in this file.
+export async function getUsers(query?: string) {
+  await requireAdmin();
+  const q = query?.trim();
+  return prisma.user.findMany({
+    where: {
+      username: { not: null },
+      ...(q
+        ? {
+            OR: [
+              { username: { contains: q, mode: "insensitive" } },
+              { email: { contains: q, mode: "insensitive" } },
+              { firstName: { contains: q, mode: "insensitive" } },
+              { lastName: { contains: q, mode: "insensitive" } },
+              { displayName: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      isAdmin: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+  });
+}
+
+export async function getUserDetail(userId: string) {
+  await requireAdmin();
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      username: true,
+      displayName: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      avatarUrl: true,
+      isAdmin: true,
+      credits: true,
+      createdAt: true,
+      ageAttested: true,
+      googleId: true,
+      passwordHash: true,
+      challenges: {
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        select: { id: true, prompt: true, status: true, templateType: true, createdAt: true },
+      },
+      _count: { select: { challenges: true, submissions: true } },
+    },
+  });
+  if (!user) return null;
+  // Whether a password/Google link exists is useful context; the hash
+  // itself never goes to the page.
+  const { passwordHash, googleId, ...rest } = user;
+  return { ...rest, hasPassword: !!passwordHash, hasGoogle: !!googleId };
+}
+
 export async function getAdmins() {
   await requireAdmin();
   return prisma.user.findMany({

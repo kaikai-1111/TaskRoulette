@@ -8,6 +8,7 @@ interface Identity {
   username: string | null;
   avatarUrl: string | null;
   hasAccount: boolean;
+  hasName: boolean; // first + last name on file (admin-only data; see NameGate)
 }
 
 interface IdentityContextValue {
@@ -30,6 +31,7 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
         username: s.username,
         avatarUrl: s.avatarUrl,
         hasAccount: s.hasAccount,
+        hasName: s.hasName,
       })
     );
   }, []);

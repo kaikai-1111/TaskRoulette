@@ -82,6 +82,13 @@ model User {
   email        String? @unique
   passwordHash String?
 
+  // Real first/last name, collected at account creation (and from existing
+  // accounts via NameGate) for admin review only — never returned by any
+  // non-admin query (see getAccountStatus, which exposes just whether
+  // they're set).
+  firstName String?
+  lastName  String?
+
   // "Continue with Google" — an alternative to the recovery-code flow above.
   // googleId is the token's stable `sub` claim; email is shared with the
   // field above (whichever path created the account first "owns" that

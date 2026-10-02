@@ -4,15 +4,21 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "@/app/account/actions";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
+import { useIdentity } from "@/components/IdentityProvider";
+import { useCredits } from "@/components/CreditsProvider";
 
 export default function RestorePage() {
   const router = useRouter();
+  const { refresh: refreshIdentity } = useIdentity();
+  const { refresh: refreshCredits } = useCredits();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   function goHome() {
+    refreshIdentity();
+    refreshCredits();
     router.push("/");
     router.refresh();
   }

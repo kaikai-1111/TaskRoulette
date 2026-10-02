@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import NavHeader from "@/components/NavHeader";
 import AgeGate from "@/components/AgeGate";
+import NameGate from "@/components/NameGate";
 import { CreditsProvider } from "@/components/CreditsProvider";
 import { IdentityProvider } from "@/components/IdentityProvider";
 import "./globals.css";
@@ -49,7 +50,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <IdentityProvider>
             <NavHeader />
             <main className="flex flex-1 flex-col">
-              <AgeGate>{children}</AgeGate>
+              <AgeGate>
+                <NameGate>{children}</NameGate>
+              </AgeGate>
             </main>
           </IdentityProvider>
         </CreditsProvider>

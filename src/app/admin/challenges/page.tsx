@@ -26,6 +26,9 @@ export default async function AdminChallengesPage() {
           <Link href="/admin/admins" className="text-black/50 dark:text-white underline">
             Admins
           </Link>
+          <Link href="/admin/users" className="text-black/50 dark:text-white underline">
+            Users
+          </Link>
         </div>
       </div>
 

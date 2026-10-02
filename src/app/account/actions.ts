@@ -18,9 +18,31 @@ export async function getAccountStatus() {
     avatarUrl: user.avatarUrl,
     credits: user.credits,
     hasAccount: !!(user.email && user.username),
+    // Only whether it's set — the names themselves are admin-only and never
+    // leave the server through here.
+    hasName: !!(user.firstName && user.lastName),
     // Admins (ADMIN_PASSWORD) can post challenges without an account too.
     canPostWithoutAccount: await isAdmin(),
   };
+}
+
+function cleanName(raw: string): string {
+  return raw.trim().replace(/\s+/g, " ").slice(0, 50);
+}
+
+// Existing accounts created before first/last name was collected get
+// blocked behind NameGate until they submit one.
+export async function submitName(
+  firstName: string,
+  lastName: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getCurrentUser();
+  if (!user.email || !user.username) return { ok: false, error: "Create an account first." };
+  const first = cleanName(firstName);
+  const last = cleanName(lastName);
+  if (!first || !last) return { ok: false, error: "Enter both a first and last name." };
+  await prisma.user.update({ where: { id: user.id }, data: { firstName: first, lastName: last } });
+  return { ok: true };
 }
 
 // Clears this device's identity cookie entirely — there's no separate
@@ -72,8 +94,16 @@ export async function createAccount(input: {
   email: string;
   username: string;
   displayName: string;
+  firstName: string;
+  lastName: string;
   password: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
+  const firstName = cleanName(input.firstName);
+  const lastName = cleanName(input.lastName);
+  if (!firstName || !lastName) {
+    return { ok: false, error: "Enter both a first and last name." };
+  }
+
   const email = input.email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { ok: false, error: "Enter a valid email address." };
@@ -96,7 +126,7 @@ export async function createAccount(input: {
   try {
     await prisma.user.update({
       where: { id: user.id },
-      data: { email, username, displayName, passwordHash },
+      data: { email, username, displayName, firstName, lastName, passwordHash },
     });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
@@ -158,6 +188,8 @@ export async function deleteAccount(
       email: null,
       passwordHash: null,
       displayName: null,
+      firstName: null,
+      lastName: null,
       avatarUrl: null,
       googleId: null,
       isAdmin: false,

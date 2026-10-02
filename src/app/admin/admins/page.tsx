@@ -13,9 +13,14 @@ export default async function AdminAdminsPage() {
     <div className="mx-auto w-full max-w-lg px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Admins</h1>
-        <Link href="/admin" className="text-sm text-black/50 dark:text-white underline">
-          Moderation queue
-        </Link>
+        <div className="flex items-center gap-4 text-sm">
+          <Link href="/admin" className="text-black/50 dark:text-white underline">
+            Moderation queue
+          </Link>
+          <Link href="/admin/users" className="text-black/50 dark:text-white underline">
+            Users
+          </Link>
+        </div>
       </div>
 
       <p className="text-sm text-black/50 dark:text-white mb-4">

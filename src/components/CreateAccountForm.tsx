@@ -10,6 +10,8 @@ export default function CreateAccountForm({ onCreated }: { onCreated?: () => voi
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -18,7 +20,7 @@ export default function CreateAccountForm({ onCreated }: { onCreated?: () => voi
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    const result = await createAccount({ email, username, displayName, password });
+    const result = await createAccount({ email, username, displayName, firstName, lastName, password });
     setSubmitting(false);
     if (!result.ok) {
       setError(result.error);
@@ -41,6 +43,31 @@ export default function CreateAccountForm({ onCreated }: { onCreated?: () => voi
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <div className="flex gap-3">
+          <label className="flex flex-1 flex-col gap-1.5">
+            <span className="text-sm font-medium">First name</span>
+            <input
+              required
+              autoComplete="given-name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+            />
+          </label>
+          <label className="flex flex-1 flex-col gap-1.5">
+            <span className="text-sm font-medium">Last name</span>
+            <input
+              required
+              autoComplete="family-name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+            />
+          </label>
+        </div>
+        <p className="-mt-1 text-xs text-black/40 dark:text-white">
+          Your real name is only visible to admins, never to other users.
+        </p>
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium">Username</span>
           <input
