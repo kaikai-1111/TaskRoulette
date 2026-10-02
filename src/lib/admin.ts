@@ -2,6 +2,7 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 import { getCurrentUser } from "./identity";
+import { prisma } from "./prisma";
 
 const COOKIE_NAME = "admin_session";
 
@@ -47,6 +48,15 @@ export async function attemptAdminLogin(password: string): Promise<boolean> {
     path: "/",
     maxAge: 60 * 60 * 12,
   });
+
+  // Knowing the shared password now also permanently marks this device's
+  // identity as an admin (account or not), so access survives past this
+  // cookie's 12h expiry instead of needing the password again each time.
+  const user = await getCurrentUser();
+  if (!user.isAdmin) {
+    await prisma.user.update({ where: { id: user.id }, data: { isAdmin: true } });
+  }
+
   return true;
 }
 
