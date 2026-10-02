@@ -88,6 +88,11 @@ model User {
   // erroring, since Google has already verified that email for us).
   googleId String? @unique
 
+  // Profile photo shown in the nav and account settings — an uploaded image
+  // (served from /api/uploads/image, same as challenge item images), not a
+  // Google avatar; a viewer with no account/no upload falls back to initials.
+  avatarUrl String?
+
   // Self-attested age/ToS gate, shown once before first use of the app.
   ageAttested Boolean @default(false)
 

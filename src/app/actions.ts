@@ -416,6 +416,197 @@ export async function getChallengeResults(challengeId: string) {
   return challenge;
 }
 
+// ---- Remix, edit, and self-service takedown ----
+
+export interface RemixSource {
+  templateType: TemplateType;
+  prompt: string;
+  category: "FUN" | "PRETRAINING";
+  purpose: "ANNOTATING" | "COLLECTING";
+  config: unknown;
+  timeLimitSeconds: number;
+  targetResponsesPerItem: number;
+  items: { mediaUrl: string | null; textContent: string | null }[];
+}
+
+// Deliberately NOT creator-gated — this is what powers "Remix" from the
+// doer-facing feed, so anyone who has seen this challenge can read its shape
+// back to build their own version. Never exposes creatorId or anything else
+// about the original poster. Only live, non-removed challenges are
+// remixable — same visibility a doer already has via the feed.
+export async function getRemixSource(challengeId: string): Promise<RemixSource | null> {
+  const challenge = await prisma.challenge.findUnique({
+    where: { id: challengeId },
+    include: { items: { orderBy: { order: "asc" } } },
+  });
+  if (!challenge) return null;
+  if (challenge.status !== "ACTIVE" && challenge.status !== "COMPLETED") return null;
+
+  return {
+    templateType: challenge.templateType as TemplateType,
+    prompt: challenge.prompt,
+    category: challenge.category as "FUN" | "PRETRAINING",
+    purpose: challenge.purpose as "ANNOTATING" | "COLLECTING",
+    config: JSON.parse(challenge.config),
+    timeLimitSeconds: challenge.timeLimitSeconds,
+    targetResponsesPerItem: challenge.targetResponsesPerItem,
+    items: challenge.items.map((i) => ({ mediaUrl: i.mediaUrl, textContent: i.textContent })),
+  };
+}
+
+export interface EditableChallenge {
+  id: string;
+  templateType: TemplateType;
+  prompt: string;
+  category: "FUN" | "PRETRAINING";
+  purpose: "ANNOTATING" | "COLLECTING";
+  config: unknown;
+  timeLimitSeconds: number;
+  targetResponsesPerItem: number;
+  status: "ACTIVE" | "COMPLETED" | "FLAGGED" | "REMOVED";
+  items: { mediaUrl: string | null; textContent: string | null }[];
+  // Has this challenge ever received a response (even one later removed by
+  // moderation)? If so, prompt/config/items/category/purpose freeze — editing
+  // those would retroactively change what already-collected answers meant.
+  // Time limit, target responses, and take-down/reactivate stay editable
+  // regardless.
+  locked: boolean;
+}
+
+export async function getMyChallengeForEdit(challengeId: string): Promise<EditableChallenge | null> {
+  const user = await getCurrentUser();
+  const challenge = await prisma.challenge.findUnique({
+    where: { id: challengeId },
+    include: {
+      items: { orderBy: { order: "asc" } },
+      _count: { select: { submissions: true } }, // any status — see `locked` doc above
+    },
+  });
+  if (!challenge || challenge.creatorId !== user.id) return null;
+
+  return {
+    id: challenge.id,
+    templateType: challenge.templateType as TemplateType,
+    prompt: challenge.prompt,
+    category: challenge.category as "FUN" | "PRETRAINING",
+    purpose: challenge.purpose as "ANNOTATING" | "COLLECTING",
+    config: JSON.parse(challenge.config),
+    timeLimitSeconds: challenge.timeLimitSeconds,
+    targetResponsesPerItem: challenge.targetResponsesPerItem,
+    status: challenge.status,
+    items: challenge.items.map((i) => ({ mediaUrl: i.mediaUrl, textContent: i.textContent })),
+    locked: challenge._count.submissions > 0,
+  };
+}
+
+export interface UpdateChallengeInput {
+  timeLimitSeconds: number;
+  targetResponsesPerItem: number;
+  // Only applied when the challenge is unlocked (see EditableChallenge.locked)
+  // — silently ignored otherwise rather than erroring, since the always-on
+  // fields above are valid to send regardless of lock state.
+  prompt?: string;
+  category?: "FUN" | "PRETRAINING";
+  purpose?: "ANNOTATING" | "COLLECTING";
+  config?: unknown;
+  items?: { mediaUrl?: string; textContent?: string }[];
+}
+
+export async function updateMyChallenge(
+  challengeId: string,
+  input: UpdateChallengeInput
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getCurrentUser();
+  const challenge = await prisma.challenge.findUnique({
+    where: { id: challengeId },
+    include: { _count: { select: { submissions: true } } },
+  });
+  if (!challenge || challenge.creatorId !== user.id) {
+    return { ok: false, error: "Can't edit this challenge." };
+  }
+
+  if (
+    input.targetResponsesPerItem < ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM ||
+    input.targetResponsesPerItem > ECONOMY.MAX_TARGET_RESPONSES_PER_ITEM
+  ) {
+    return {
+      ok: false,
+      error: `Responses per item must be between ${ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM} and ${ECONOMY.MAX_TARGET_RESPONSES_PER_ITEM}.`,
+    };
+  }
+  if (
+    input.timeLimitSeconds !== ECONOMY.NO_TIME_LIMIT &&
+    (input.timeLimitSeconds < ECONOMY.MIN_TIME_LIMIT_SECONDS ||
+      input.timeLimitSeconds > ECONOMY.MAX_TIME_LIMIT_SECONDS)
+  ) {
+    return {
+      ok: false,
+      error: `Time limit must be between ${ECONOMY.MIN_TIME_LIMIT_SECONDS} and ${ECONOMY.MAX_TIME_LIMIT_SECONDS} seconds, or left unlimited.`,
+    };
+  }
+
+  const locked = challenge._count.submissions > 0;
+  const data: Prisma.ChallengeUpdateInput = {
+    timeLimitSeconds: input.timeLimitSeconds,
+    targetResponsesPerItem: input.targetResponsesPerItem,
+  };
+
+  if (!locked) {
+    if (input.prompt !== undefined) {
+      if (!input.prompt.trim()) return { ok: false, error: "Give the challenge a prompt." };
+      data.prompt = input.prompt.trim();
+    }
+    if (input.category !== undefined) data.category = input.category;
+    if (input.purpose !== undefined) data.purpose = input.purpose;
+    if (input.config !== undefined) {
+      let config;
+      try {
+        config = validateConfig(challenge.templateType as TemplateType, input.config);
+      } catch (err) {
+        if (err instanceof ValidationError) return { ok: false, error: err.message };
+        throw err;
+      }
+      data.config = JSON.stringify(config);
+    }
+    if (input.items !== undefined) {
+      if (input.items.length === 0) return { ok: false, error: "Add at least one item." };
+      // Safe to fully replace — `locked` false means zero submissions
+      // reference any existing item, so none would be orphaned.
+      data.items = {
+        deleteMany: {},
+        create: input.items.map((item, order) => ({
+          order,
+          mediaUrl: item.mediaUrl ?? null,
+          textContent: item.textContent ?? null,
+        })),
+      };
+    }
+  }
+
+  await prisma.challenge.update({ where: { id: challengeId }, data });
+  revalidatePath(`/challenges/${challengeId}`);
+  revalidatePath("/mine");
+  return { ok: true };
+}
+
+// Creator-scoped take-down/reactivate — same effect as the admin action in
+// src/app/admin/actions.ts, but self-service and gated on ownership instead
+// of ADMIN_PASSWORD.
+export async function setMyChallengeStatus(
+  challengeId: string,
+  status: "ACTIVE" | "REMOVED"
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getCurrentUser();
+  const challenge = await prisma.challenge.findUnique({ where: { id: challengeId } });
+  if (!challenge || challenge.creatorId !== user.id) {
+    return { ok: false, error: "Can't change this challenge." };
+  }
+  await prisma.challenge.update({ where: { id: challengeId }, data: { status } });
+  revalidatePath("/mine");
+  revalidatePath(`/challenges/${challengeId}`);
+  return { ok: true };
+}
+
 export async function flagContent(input: {
   targetType: "CHALLENGE" | "SUBMISSION";
   targetId: string;

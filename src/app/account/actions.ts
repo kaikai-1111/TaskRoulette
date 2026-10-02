@@ -15,11 +15,21 @@ export async function getAccountStatus() {
     email: user.email,
     username: user.username,
     displayName: user.displayName,
+    avatarUrl: user.avatarUrl,
     credits: user.credits,
     hasAccount: !!(user.email && user.username),
     // Admins (ADMIN_PASSWORD) can post challenges without an account too.
     canPostWithoutAccount: await isAdmin(),
   };
+}
+
+export async function setAvatarUrl(
+  url: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getCurrentUser();
+  if (!url.trim()) return { ok: false, error: "No photo uploaded." };
+  await prisma.user.update({ where: { id: user.id }, data: { avatarUrl: url } });
+  return { ok: true };
 }
 
 export async function getAccountStats() {
@@ -163,6 +173,7 @@ export async function signInWithGoogle(
   const googleId = payload.sub;
   const email = payload.email.toLowerCase();
   const name = payload.name?.trim();
+  const picture = payload.picture;
 
   let user = await prisma.user.findUnique({ where: { googleId } });
 
@@ -183,7 +194,9 @@ export async function signInWithGoogle(
       try {
         user = await prisma.user.update({
           where: { id: current.id },
-          data: { email, username, displayName: name || username, googleId },
+          // Google's picture URL as a starting avatar — the account page
+          // lets them replace it with their own upload any time.
+          data: { email, username, displayName: name || username, googleId, avatarUrl: picture },
         });
         break;
       } catch (err) {

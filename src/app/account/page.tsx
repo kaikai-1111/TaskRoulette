@@ -1,19 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   getAccountStats,
   getAccountStatus,
   regenerateRecoveryCode,
+  setAvatarUrl,
   updateDisplayName,
 } from "@/app/account/actions";
 import CreateAccountForm from "@/components/CreateAccountForm";
+import { useIdentity } from "@/components/IdentityProvider";
 
 type Status = {
   email: string | null;
   username: string | null;
   displayName: string | null;
+  avatarUrl: string | null;
   credits: number;
   hasAccount: boolean;
 };
@@ -27,6 +30,7 @@ type Stats = {
 };
 
 export default function AccountPage() {
+  const { refresh: refreshIdentity } = useIdentity();
   const [status, setStatus] = useState<Status | undefined>(undefined);
   const [stats, setStats] = useState<Stats | undefined>(undefined);
   const [editingName, setEditingName] = useState(false);
@@ -35,6 +39,9 @@ export default function AccountPage() {
   const [savingName, setSavingName] = useState(false);
   const [newRecoveryCode, setNewRecoveryCode] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   async function handleRegenerate() {
     setRegenerating(true);
@@ -63,6 +70,29 @@ export default function AccountPage() {
     }
     setStatus((s) => (s ? { ...s, displayName: nameInput.trim() } : s));
     setEditingName(false);
+    refreshIdentity();
+  }
+
+  async function handleAvatarSelected(file: File | undefined) {
+    if (!file) return;
+    setAvatarError(null);
+    setUploadingAvatar(true);
+    try {
+      const res = await fetch("/api/uploads/image", {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Upload failed.");
+      const result = await setAvatarUrl(body.url);
+      if (!result.ok) throw new Error(result.error);
+      setStatus((s) => (s ? { ...s, avatarUrl: body.url } : s));
+      refreshIdentity();
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : "Couldn't upload that photo — try again.");
+    }
+    setUploadingAvatar(false);
   }
 
   if (status === undefined) {
@@ -83,13 +113,60 @@ export default function AccountPage() {
             challenges, or to carry your credits to another device.
           </p>
           <CreateAccountForm
-            onCreated={() =>
-              setStatus((s) => (s ? { ...s, hasAccount: true } : s))
-            }
+            onCreated={() => {
+              getAccountStatus().then((s) => {
+                setStatus(s);
+                setNameInput(s.displayName ?? "");
+              });
+              refreshIdentity();
+            }}
           />
         </div>
       ) : (
         <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              className="relative h-16 w-16 shrink-0 rounded-full overflow-hidden disabled:opacity-50"
+              title="Change photo"
+            >
+              {status.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={status.avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center bg-blue-600 dark:bg-orange-400 text-white text-xl font-semibold">
+                  {(status.displayName ?? status.username ?? "?").trim().charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 text-white text-[10px] font-medium opacity-0 hover:opacity-100 transition">
+                {uploadingAvatar ? "Uploading…" : "Change"}
+              </span>
+            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                handleAvatarSelected(e.target.files?.[0]);
+                e.target.value = "";
+              }}
+            />
+            <div className="flex flex-col gap-0.5">
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                className="self-start text-sm text-blue-600 dark:text-blue-400 underline disabled:opacity-40"
+              >
+                {uploadingAvatar ? "Uploading…" : "Change photo"}
+              </button>
+              {avatarError && <p className="text-xs text-red-500">{avatarError}</p>}
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2">
             {editingName ? (
               <form onSubmit={handleSaveName} className="flex flex-col gap-2">

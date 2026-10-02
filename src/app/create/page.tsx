@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createChallenge } from "@/app/actions";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  createChallenge,
+  getMyChallengeForEdit,
+  getRemixSource,
+  setMyChallengeStatus,
+  updateMyChallenge,
+  type EditableChallenge,
+  type RemixSource,
+} from "@/app/actions";
 import { getAccountStatus } from "@/app/account/actions";
 import { ECONOMY } from "@/lib/economy";
 import { TEMPLATE_TYPES, type TemplateType } from "@/lib/templates/types";
@@ -47,8 +55,31 @@ function defaultPurposeFor(t: TemplateType): "ANNOTATING" | "COLLECTING" {
   return COLLECTING_TEMPLATE_TYPES.includes(t) ? "COLLECTING" : "ANNOTATING";
 }
 
+function usesImageItemsFor(templateType: TemplateType, mediaMode: "image" | "text"): boolean {
+  return templateType === "BOUNDING_BOX" || templateType === "POINT" || (templateType === "LABELING" && mediaMode === "image");
+}
+
+type Source = Pick<
+  RemixSource,
+  "templateType" | "prompt" | "category" | "purpose" | "config" | "timeLimitSeconds" | "targetResponsesPerItem" | "items"
+>;
+
 export default function CreatePage() {
+  return (
+    <Suspense
+      fallback={<div className="mx-auto w-full max-w-lg px-4 py-8 text-black/40 dark:text-white">Loading…</div>}
+    >
+      <CreatePageInner />
+    </Suspense>
+  );
+}
+
+function CreatePageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
+  const remixId = searchParams.get("remix");
+
   const [templateType, setTemplateType] = useState<TemplateType>("LABELING");
   const [category, setCategory] = useState<"FUN" | "PRETRAINING">("FUN");
   const [purpose, setPurpose] = useState<"ANNOTATING" | "COLLECTING">(defaultPurposeFor("LABELING"));
@@ -70,6 +101,15 @@ export default function CreatePage() {
   const [hasAccount, setHasAccount] = useState<boolean | null>(null); // null = loading
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Edit/remix mode
+  const [loadingSource, setLoadingSource] = useState(!!editId || !!remixId);
+  const [sourceError, setSourceError] = useState<string | null>(null);
+  const [editChallengeId, setEditChallengeId] = useState<string | null>(null);
+  const [locked, setLocked] = useState(false);
+  const [challengeStatus, setChallengeStatus] = useState<EditableChallenge["status"] | null>(null);
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [remixedFromPrompt, setRemixedFromPrompt] = useState<string | null>(null);
+
   useEffect(() => {
     getAccountStatus().then((s) => {
       setHasAccount(s.hasAccount);
@@ -77,8 +117,71 @@ export default function CreatePage() {
     });
   }, []);
 
-  const usesImageItems =
-    templateType === "BOUNDING_BOX" || templateType === "POINT" || (templateType === "LABELING" && mediaMode === "image");
+  useEffect(() => {
+    function applySource(src: Source) {
+      setTemplateType(src.templateType);
+      setPrompt(src.prompt);
+      setCategory(src.category);
+      setPurpose(src.purpose);
+      setTargetResponsesPerItem(src.targetResponsesPerItem);
+      if (src.timeLimitSeconds === ECONOMY.NO_TIME_LIMIT) {
+        setNoTimeLimit(true);
+      } else {
+        setNoTimeLimit(false);
+        setTimeLimitSeconds(src.timeLimitSeconds);
+      }
+
+      const config = src.config as Record<string, unknown>;
+      if (src.templateType === "BOUNDING_BOX" || src.templateType === "POINT") {
+        setTargetLabel(typeof config.targetLabel === "string" ? config.targetLabel : "");
+      } else if (src.templateType === "LABELING") {
+        const options = config.options;
+        setOptionsInput(Array.isArray(options) ? options.join(", ") : "");
+      } else if (src.templateType === "VIDEO_RECORDING") {
+        setMaxDurationSeconds(
+          typeof config.maxDurationSeconds === "number" ? config.maxDurationSeconds : ECONOMY.DEFAULT_VIDEO_SECONDS
+        );
+      }
+
+      const srcUsesImages =
+        src.templateType === "BOUNDING_BOX" ||
+        src.templateType === "POINT" ||
+        (src.templateType === "LABELING" && src.items.some((i) => i.mediaUrl));
+      if (src.templateType === "LABELING") setMediaMode(srcUsesImages ? "image" : "text");
+      setItemsRaw(src.items.map((i) => (srcUsesImages ? i.mediaUrl : i.textContent) ?? "").filter(Boolean).join("\n"));
+    }
+
+    if (editId) {
+      getMyChallengeForEdit(editId).then((c) => {
+        if (!c) {
+          setSourceError("Can't edit this challenge — it may not be yours.");
+          setLoadingSource(false);
+          return;
+        }
+        applySource(c);
+        setEditChallengeId(c.id);
+        setLocked(c.locked);
+        setChallengeStatus(c.status);
+        setLoadingSource(false);
+      });
+    } else if (remixId) {
+      getRemixSource(remixId).then((src) => {
+        if (!src) {
+          setSourceError("Can't remix that challenge right now — it may have been taken down.");
+          setLoadingSource(false);
+          return;
+        }
+        applySource(src);
+        setRemixedFromPrompt(src.prompt);
+        setLoadingSource(false);
+      });
+    }
+    // Only ever run once, on whichever query param this page loaded with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId, remixId]);
+
+  const usesImageItems = usesImageItemsFor(templateType, mediaMode);
+  const fieldsLocked = !!editChallengeId && locked;
 
   const items = useMemo(
     () =>
@@ -112,15 +215,32 @@ export default function CreatePage() {
     const challengeItems = usesImageItems
       ? items.map((mediaUrl) => ({ mediaUrl }))
       : items.map((textContent) => ({ textContent }));
+    const resolvedTimeLimit = noTimeLimit ? ECONOMY.NO_TIME_LIMIT : timeLimitSeconds;
 
     setSubmitting(true);
+
+    if (editChallengeId) {
+      const result = await updateMyChallenge(editChallengeId, {
+        timeLimitSeconds: resolvedTimeLimit,
+        targetResponsesPerItem,
+        ...(fieldsLocked ? {} : { prompt, category, purpose, config, items: challengeItems }),
+      });
+      setSubmitting(false);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      router.push(`/challenges/${editChallengeId}`);
+      return;
+    }
+
     const result = await createChallenge({
       templateType,
       category,
       purpose,
       prompt,
       config,
-      timeLimitSeconds: noTimeLimit ? ECONOMY.NO_TIME_LIMIT : timeLimitSeconds,
+      timeLimitSeconds: resolvedTimeLimit,
       targetResponsesPerItem,
       items: challengeItems,
     });
@@ -133,6 +253,15 @@ export default function CreatePage() {
     }
     adjust(-totalCost);
     router.push(`/challenges/${result.challengeId}`);
+  }
+
+  async function handleToggleStatus() {
+    if (!editChallengeId || !challengeStatus) return;
+    const next = challengeStatus === "REMOVED" ? "ACTIVE" : "REMOVED";
+    setStatusSaving(true);
+    const result = await setMyChallengeStatus(editChallengeId, next);
+    setStatusSaving(false);
+    if (result.ok) setChallengeStatus(next);
   }
 
   function appendItems(urls: string[]) {
@@ -169,11 +298,19 @@ export default function CreatePage() {
 
   const itemsCopy = ITEMS_COPY[templateType];
 
-  if (hasAccount === null) {
+  if (loadingSource || hasAccount === null) {
     return <div className="mx-auto w-full max-w-lg px-4 py-8 text-black/40 dark:text-white">Loading…</div>;
   }
 
-  if (!hasAccount && !isAdmin) {
+  if (sourceError) {
+    return (
+      <div className="mx-auto w-full max-w-sm px-4 py-8">
+        <p className="text-sm text-red-500">{sourceError}</p>
+      </div>
+    );
+  }
+
+  if (!editChallengeId && !hasAccount && !isAdmin) {
     return (
       <div className="mx-auto w-full max-w-sm px-4 py-8">
         <h1 className="text-2xl font-bold mb-1">Create an account to post</h1>
@@ -188,14 +325,48 @@ export default function CreatePage() {
 
   return (
     <div className="mx-auto w-full max-w-lg px-4 py-8">
-      <h1 className="text-2xl font-bold mb-1">Post a challenge</h1>
-      <p className="text-sm text-black/50 dark:text-white mb-6">
-        {credits === null ? "…" : `You have ${credits} credits.`} Posting a challenge costs a flat{" "}
-        {ECONOMY.CHALLENGE_POST_COST} credits, no matter how many items or responses you ask for.
-      </p>
+      <h1 className="text-2xl font-bold mb-1">{editChallengeId ? "Edit challenge" : "Post a challenge"}</h1>
+      {editChallengeId ? (
+        <p className="text-sm text-black/50 dark:text-white mb-6">
+          {fieldsLocked
+            ? "This challenge already has responses, so its task type, prompt, config, and items are locked. Responses needed, time limit, and take-down stay editable."
+            : "No responses yet — everything below is still editable."}
+        </p>
+      ) : (
+        <p className="text-sm text-black/50 dark:text-white mb-6">
+          {credits === null ? "…" : `You have ${credits} credits.`} Posting a challenge costs a flat{" "}
+          {ECONOMY.CHALLENGE_POST_COST} credits, no matter how many items or responses you ask for.
+        </p>
+      )}
+
+      {remixedFromPrompt && (
+        <div className="mb-5 rounded-lg bg-blue-500/10 border border-blue-500/20 px-3 py-2 text-xs text-black/60 dark:text-white">
+          Remixing &ldquo;{remixedFromPrompt}&rdquo; — edit anything below before posting your own copy.
+        </div>
+      )}
+
+      {editChallengeId && challengeStatus && (
+        <div className="mb-5 flex items-center justify-between rounded-lg bg-black/5 dark:bg-white/10 px-3 py-2 text-sm">
+          <span>
+            Status: <span className="font-semibold">{challengeStatus.toLowerCase()}</span>
+          </span>
+          {(challengeStatus === "ACTIVE" || challengeStatus === "REMOVED") && (
+            <button
+              type="button"
+              onClick={handleToggleStatus}
+              disabled={statusSaving}
+              className={`text-sm underline disabled:opacity-40 ${
+                challengeStatus === "REMOVED" ? "text-blue-600 dark:text-blue-400" : "text-red-500"
+              }`}
+            >
+              {statusSaving ? "Saving…" : challengeStatus === "REMOVED" ? "Reactivate" : "Take down"}
+            </button>
+          )}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <fieldset className="flex flex-col gap-1.5">
+        <fieldset disabled={fieldsLocked} className="flex flex-col gap-1.5 disabled:opacity-50">
           <label className="text-sm font-medium">Task type</label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {TEMPLATE_TYPES.map((t) => (
@@ -223,6 +394,7 @@ export default function CreatePage() {
           <span className="text-sm font-medium">Prompt / title</span>
           <input
             required
+            disabled={fieldsLocked}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder={
@@ -236,7 +408,7 @@ export default function CreatePage() {
                       ? "e.g. Show us what's on your desk"
                       : "e.g. Is this a good pun?"
             }
-            className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+            className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 disabled:opacity-50"
           />
         </label>
 
@@ -247,10 +419,11 @@ export default function CreatePage() {
             </span>
             <input
               required
+              disabled={fieldsLocked}
               value={targetLabel}
               onChange={(e) => setTargetLabel(e.target.value)}
               placeholder="the cat"
-              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 disabled:opacity-50"
             />
           </label>
         )}
@@ -259,10 +432,11 @@ export default function CreatePage() {
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium">Answer options (comma-separated, optional)</span>
             <input
+              disabled={fieldsLocked}
               value={optionsInput}
               onChange={(e) => setOptionsInput(e.target.value)}
               placeholder="Leave blank for free-text answers, e.g.: yes, no, unclear"
-              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 disabled:opacity-50"
             />
           </label>
         )}
@@ -278,9 +452,10 @@ export default function CreatePage() {
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium">Max recording length</span>
             <select
+              disabled={fieldsLocked}
               value={maxDurationSeconds}
               onChange={(e) => setMaxDurationSeconds(Number(e.target.value))}
-              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 disabled:opacity-50"
             >
               {Array.from(
                 { length: ECONOMY.MAX_VIDEO_SECONDS - ECONOMY.MIN_VIDEO_SECONDS + 1 },
@@ -302,7 +477,7 @@ export default function CreatePage() {
         )}
 
         {templateType === "LABELING" && (
-          <fieldset className="flex flex-col gap-1.5">
+          <fieldset disabled={fieldsLocked} className="flex flex-col gap-1.5 disabled:opacity-50">
             <label className="text-sm font-medium">Items are</label>
             <div className="flex gap-2 text-sm">
               <button
@@ -331,7 +506,7 @@ export default function CreatePage() {
           <span className="text-sm font-medium">
             {usesImageItems ? "Images — upload files or paste URLs, one per line" : itemsCopy.label}
           </span>
-          {usesImageItems && (
+          {usesImageItems && !fieldsLocked && (
             <div className="flex items-center gap-2">
               <input
                 type="file"
@@ -347,14 +522,15 @@ export default function CreatePage() {
               {uploading && <span className="text-xs text-black/40 dark:text-white">Uploading…</span>}
             </div>
           )}
-          {usesImageItems && <ImageSearch onAdd={appendItems} />}
+          {usesImageItems && !fieldsLocked && <ImageSearch onAdd={appendItems} />}
           <textarea
             required
+            disabled={fieldsLocked}
             rows={5}
             value={itemsRaw}
             onChange={(e) => setItemsRaw(e.target.value)}
             placeholder={itemsCopy.placeholder}
-            className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 font-mono text-sm"
+            className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 font-mono text-sm disabled:opacity-50"
           />
           <span className="text-xs text-black/40 dark:text-white">{items.length} item(s)</span>
         </label>
@@ -396,13 +572,15 @@ export default function CreatePage() {
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
+            disabled={fieldsLocked}
             checked={category === "PRETRAINING"}
             onChange={(e) => setCategory(e.target.checked ? "PRETRAINING" : "FUN")}
+            className="disabled:opacity-50"
           />
           This is for training my own model (vs. just for fun)
         </label>
 
-        <fieldset className="flex flex-col gap-1.5">
+        <fieldset disabled={fieldsLocked} className="flex flex-col gap-1.5 disabled:opacity-50">
           <label className="text-sm font-medium">This challenge is</label>
           <div className="flex gap-2 text-sm">
             <button
@@ -431,21 +609,29 @@ export default function CreatePage() {
           </span>
         </fieldset>
 
-        <div className="rounded-lg bg-black/5 dark:bg-white/10 px-3 py-2 text-sm flex justify-between">
-          <span>Total cost</span>
-          <span className={!canAfford ? "text-red-500 font-semibold" : "font-semibold"}>
-            {totalCost} credits
-          </span>
-        </div>
+        {!editChallengeId && (
+          <div className="rounded-lg bg-black/5 dark:bg-white/10 px-3 py-2 text-sm flex justify-between">
+            <span>Total cost</span>
+            <span className={!canAfford ? "text-red-500 font-semibold" : "font-semibold"}>
+              {totalCost} credits
+            </span>
+          </div>
+        )}
 
         {error && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500">{error}</p>}
 
         <button
           type="submit"
-          disabled={submitting || uploading || items.length === 0 || !canAfford}
+          disabled={submitting || uploading || items.length === 0 || (!editChallengeId && !canAfford)}
           className="rounded-full bg-orange-500 hover:bg-orange-600 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
         >
-          {submitting ? "Posting…" : `Post for ${totalCost} credits`}
+          {submitting
+            ? editChallengeId
+              ? "Saving…"
+              : "Posting…"
+            : editChallengeId
+              ? "Save changes"
+              : `Post for ${totalCost} credits`}
         </button>
       </form>
     </div>

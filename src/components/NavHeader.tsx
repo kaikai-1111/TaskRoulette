@@ -2,6 +2,7 @@ import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import MobileNavMenu from "@/components/MobileNavMenu";
 import CreditsBadge from "@/components/CreditsBadge";
+import AccountBadge from "@/components/AccountBadge";
 
 export default function NavHeader() {
   return (
@@ -31,6 +32,7 @@ export default function NavHeader() {
       </nav>
       <div className="flex flex-1 sm:flex-none items-center justify-end gap-3">
         <CreditsBadge />
+        <AccountBadge />
         <ThemeToggle />
         <MobileNavMenu />
       </div>

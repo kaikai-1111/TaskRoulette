@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { flagContent, getFeedItemForChallenge, getNextFeedItem, submitAnswer } from "@/app/actions";
 import type { FeedItem } from "@/lib/templates/types";
 import { CAPTURE_COMPONENTS } from "@/components/templates/registry";
@@ -180,6 +181,12 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
               : `${timeLeft}s`}
         </span>
         <div className="flex items-center gap-3">
+          <Link
+            href={`/create?remix=${item.challengeId}`}
+            className="text-black/30 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 text-xs underline underline-offset-2"
+          >
+            Remix
+          </Link>
           {reportSent ? (
             <span className="text-xs text-blue-600 dark:text-blue-400">Reported</span>
           ) : (
