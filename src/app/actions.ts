@@ -284,7 +284,7 @@ export interface CreateChallengeInput {
 export async function createChallenge(
   input: CreateChallengeInput
 ): Promise<
-  { ok: true; challengeId: string } | { ok: false; error: string; needsAccount?: true }
+  { ok: true; challengeId: string; creditsSpent: number } | { ok: false; error: string; needsAccount?: true }
 > {
   const user = await getActiveUser();
 
@@ -327,16 +327,18 @@ export async function createChallenge(
     throw err;
   }
 
-  const totalCost = ECONOMY.CHALLENGE_POST_COST;
+  // Admins post for free: no balance check, no deduction, no ledger row.
+  const totalCost = (await isAdmin()) ? 0 : ECONOMY.CHALLENGE_POST_COST;
 
   try {
     const challenge = await prisma.$transaction(async (tx) => {
-      const fresh = await tx.user.findUniqueOrThrow({ where: { id: user.id } });
-      if (fresh.credits < totalCost) {
-        throw new InsufficientCreditsError(totalCost, fresh.credits);
+      if (totalCost > 0) {
+        const fresh = await tx.user.findUniqueOrThrow({ where: { id: user.id } });
+        if (fresh.credits < totalCost) {
+          throw new InsufficientCreditsError(totalCost, fresh.credits);
+        }
+        await tx.user.update({ where: { id: user.id }, data: { credits: { decrement: totalCost } } });
       }
-
-      await tx.user.update({ where: { id: user.id }, data: { credits: { decrement: totalCost } } });
 
       const created = await tx.challenge.create({
         data: {
@@ -358,20 +360,22 @@ export async function createChallenge(
         },
       });
 
-      await tx.creditTransaction.create({
-        data: {
-          userId: user.id,
-          amount: -totalCost,
-          reason: "SPEND_CHALLENGE_POST",
-          relatedChallengeId: created.id,
-        },
-      });
+      if (totalCost > 0) {
+        await tx.creditTransaction.create({
+          data: {
+            userId: user.id,
+            amount: -totalCost,
+            reason: "SPEND_CHALLENGE_POST",
+            relatedChallengeId: created.id,
+          },
+        });
+      }
 
       return created;
     });
 
     revalidatePath("/create");
-    return { ok: true, challengeId: challenge.id };
+    return { ok: true, challengeId: challenge.id, creditsSpent: totalCost };
   } catch (err) {
     if (err instanceof InsufficientCreditsError) {
       return {

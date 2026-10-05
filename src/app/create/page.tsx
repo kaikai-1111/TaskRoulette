@@ -204,7 +204,8 @@ function CreatePageInner() {
   );
 
   const totalCost = ECONOMY.CHALLENGE_POST_COST;
-  const canAfford = credits === null || credits >= totalCost;
+  // Admins post free, so their balance never blocks a post.
+  const canAfford = isAdmin || credits === null || credits >= totalCost;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -269,7 +270,7 @@ function CreatePageInner() {
       if (result.needsAccount) setHasAccount(false);
       return;
     }
-    adjust(-totalCost);
+    adjust(-result.creditsSpent);
     router.push(`/challenges/${result.challengeId}`);
   }
 
@@ -352,8 +353,10 @@ function CreatePageInner() {
         </p>
       ) : (
         <p className="text-sm text-black/50 dark:text-white mb-6">
-          {credits === null ? "…" : `You have ${credits} credits.`} Posting a challenge costs a flat{" "}
-          {ECONOMY.CHALLENGE_POST_COST} credits, no matter how many items or responses you ask for.
+          {credits === null ? "…" : `You have ${credits} credits.`}{" "}
+          {isAdmin
+            ? "Posting is free for admins."
+            : `Posting a challenge costs a flat ${ECONOMY.CHALLENGE_POST_COST} credits, no matter how many items or responses you ask for.`}
         </p>
       )}
 
@@ -493,8 +496,9 @@ function CreatePageInner() {
 
         {templateType === "PHOTO_CAPTURE" && (
           <div className="rounded-lg bg-amber-400/10 border border-amber-400/30 px-3 py-2 text-xs text-black/60 dark:text-white">
-            Doers see an explicit camera-consent screen before taking a photo. Each item below is a
-            separate thing to photograph — doers take one photo per item, not a batch.
+            Doers see an explicit camera-consent screen before taking a photo, and can upload an
+            existing one instead. Each item below is a separate thing to photograph — doers submit
+            one photo per item, not a batch.
           </div>
         )}
 
@@ -641,7 +645,7 @@ function CreatePageInner() {
           <div className="rounded-lg bg-black/5 dark:bg-white/10 px-3 py-2 text-sm flex justify-between">
             <span>Total cost</span>
             <span className={!canAfford ? "text-red-500 font-semibold" : "font-semibold"}>
-              {totalCost} credits
+              {isAdmin ? "Free (admin)" : `${totalCost} credits`}
             </span>
           </div>
         )}
@@ -664,7 +668,9 @@ function CreatePageInner() {
               : "Posting…"
             : editChallengeId
               ? "Save changes"
-              : `Post for ${totalCost} credits`}
+              : isAdmin
+                ? "Post (free for admins)"
+                : `Post for ${totalCost} credits`}
         </button>
       </form>
     </div>

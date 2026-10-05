@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { CaptureProps } from "@/lib/templates/CaptureProps";
 
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
 type Stage = "consent" | "starting" | "ready" | "reviewing" | "uploading" | "error";
 
 export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
@@ -12,6 +14,7 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const liveVideoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   function stopStream() {
@@ -42,7 +45,7 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
       setStage("ready");
     } catch {
       setErrorMsg(
-        "Couldn't access your camera — permission was denied or none is available. Use Skip below to move on."
+        "Couldn't access your camera — permission was denied or none is available. You can upload a photo instead, or use Skip below to move on."
       );
       setStage("error");
     }
@@ -70,6 +73,23 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
     );
   }
 
+  // Alternative to the camera: pick an existing photo from the device. Goes
+  // through the same review/submit step as a camera shot.
+  function handleFileChosen(file: File | undefined) {
+    if (!file) return;
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      setErrorMsg("That file isn't a JPEG, PNG, WebP or GIF image.");
+      setStage("error");
+      return;
+    }
+    stopStream();
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setErrorMsg(null);
+    setBlob(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setStage("reviewing");
+  }
+
   function retake() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
@@ -84,7 +104,7 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
     try {
       const res = await fetch("/api/uploads/image", {
         method: "POST",
-        headers: { "Content-Type": "image/jpeg" },
+        headers: { "Content-Type": blob.type || "image/jpeg" },
         body: blob,
       });
       if (!res.ok) {
@@ -101,6 +121,28 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
 
   const photoPrompt = item.textContent ?? item.prompt;
 
+  const uploadControl = (
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={ACCEPTED_TYPES.join(",")}
+        className="hidden"
+        onChange={(e) => {
+          handleFileChosen(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="w-full rounded-full border border-black/10 dark:border-white/20 px-6 py-3 font-medium active:scale-95 transition"
+      >
+        Upload a photo instead
+      </button>
+    </>
+  );
+
   if (stage === "consent") {
     return (
       <div className="flex flex-col items-center gap-4 w-full max-w-sm text-center">
@@ -108,7 +150,7 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
         <div className="rounded-lg border border-amber-400/40 bg-amber-400/10 p-4 text-sm text-left">
           <p className="font-semibold mb-1">This challenge collects a photo.</p>
           <p className="text-black/60 dark:text-white">
-            You&apos;ll be asked for camera access. By submitting you agree the photo may be stored
+            You&apos;ll be asked for camera access, or you can upload a photo you already have. By submitting you agree the photo may be stored
             and used as training/derived data, per the{" "}
             <a href="/terms" className="underline">
               terms
@@ -123,6 +165,7 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
         >
           Allow camera &amp; take photo
         </button>
+        {uploadControl}
       </div>
     );
   }
@@ -135,6 +178,7 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
     return (
       <div className="flex flex-col items-center gap-3 text-center max-w-sm">
         <p className="text-red-500 text-sm">{errorMsg}</p>
+        {uploadControl}
       </div>
     );
   }

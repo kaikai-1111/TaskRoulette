@@ -42,7 +42,7 @@ export const TEMPLATE_TYPES: { value: TemplateType; label: string; blurb: string
   {
     value: "PHOTO_CAPTURE",
     label: "Take a picture",
-    blurb: "Doer takes a photo on their camera. For collecting new data rather than annotating existing data.",
+    blurb: "Doer takes a photo on their camera or uploads one. For collecting new data rather than annotating existing data.",
   },
   {
     value: "SURVEY",
