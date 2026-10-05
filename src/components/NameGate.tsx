@@ -50,7 +50,7 @@ export default function NameGate({ children }: { children: React.ReactNode }) {
     <div className="flex flex-1 flex-col items-center justify-center px-6 gap-4">
       <p className="text-xl font-semibold text-center">One more thing</p>
       <p className="max-w-xs text-center text-sm text-black/60 dark:text-white">
-        We now ask every account for a first and last name. It&apos;s only visible to admins,
+        We now ask every account for a first and last name. It&apos;s only visible to you and admins,
         never to other users.
       </p>
       <form onSubmit={handleSubmit} className="flex w-full max-w-xs flex-col gap-3">

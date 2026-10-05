@@ -32,6 +32,12 @@ export function formatAnswerSummary(templateType: TemplateType, raw: string): st
     }
     case "PHOTO_CAPTURE":
       return "photo";
+    case "SURVEY": {
+      const answered = Array.isArray(a.responses)
+        ? (a.responses as { value: unknown }[]).filter((r) => r.value !== null).length
+        : 0;
+      return `survey (${answered} answered)`;
+    }
     default:
       return raw;
   }

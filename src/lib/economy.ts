@@ -20,6 +20,11 @@ export const ECONOMY = {
   // (tens of thousands) on a single item without hitting an arbitrary wall.
   MAX_TARGET_RESPONSES_PER_ITEM: 50_000,
 
+  // Survey limits — bounded so one card stays answerable and stored answers stay small.
+  MAX_SURVEY_QUESTIONS: 25,
+  MAX_SURVEY_OPTIONS: 12,
+  MAX_SURVEY_TEXT_ANSWER_CHARS: 2000,
+
   // Video/webcam recording (deferred in the original spec, now scoped in):
   // hard-capped short so hosting cost and privacy exposure stay bounded.
   MIN_VIDEO_SECONDS: 2,

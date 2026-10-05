@@ -20,7 +20,12 @@ export async function getAccountStatus() {
     hasAccount: !!(user.email && user.username),
     // Only whether it's set — the names themselves are admin-only and never
     // leave the server through here.
+    // Their own data, returned only to them so they can correct it; other
+    // users never get it (admins read it via the admin-gated actions).
+    firstName: user.firstName,
+    lastName: user.lastName,
     hasName: !!(user.firstName && user.lastName),
+    hasPassword: !!user.passwordHash,
     isBanned: user.isBanned,
     banReason: user.banReason,
     // Admins (ADMIN_PASSWORD) can post challenges without an account too.
@@ -204,14 +209,47 @@ export async function deleteAccount(
   return { ok: true };
 }
 
-export async function updateDisplayName(
-  displayName: string
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  const trimmed = displayName.trim().slice(0, 40);
-  if (!trimmed) return { ok: false, error: "Display name can't be empty." };
+export async function updateProfile(input: {
+  displayName: string;
+  firstName: string;
+  lastName: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
   const user = await getActiveUser();
-  await prisma.user.update({ where: { id: user.id }, data: { displayName: trimmed } });
+  if (!user.email || !user.username) return { ok: false, error: "Create an account first." };
+  const displayName = input.displayName.trim().slice(0, 40);
+  const firstName = cleanName(input.firstName);
+  const lastName = cleanName(input.lastName);
+  if (!displayName) return { ok: false, error: "Display name can't be empty." };
+  if (!firstName || !lastName) return { ok: false, error: "Enter both a first and last name." };
+  await prisma.user.update({ where: { id: user.id }, data: { displayName, firstName, lastName } });
   return { ok: true };
+}
+
+// Email is the sign-in identifier, so changing it needs the current password
+// (accounts with no password — Google-only — have nothing to confirm with).
+export async function changeEmail(
+  newEmail: string,
+  password: string
+): Promise<{ ok: true; email: string } | { ok: false; error: string }> {
+  const user = await getActiveUser();
+  if (!user.email || !user.username) return { ok: false, error: "Create an account first." };
+  const email = newEmail.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { ok: false, error: "Enter a valid email address." };
+  }
+  if (email === user.email) return { ok: false, error: "That's already your email." };
+  if (user.passwordHash && !(await verifyPassword(password, user.passwordHash))) {
+    return { ok: false, error: "Wrong password." };
+  }
+  try {
+    await prisma.user.update({ where: { id: user.id }, data: { email } });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return { ok: false, error: "That email is already registered." };
+    }
+    return { ok: false, error: "Couldn't change the email — try again." };
+  }
+  return { ok: true, email };
 }
 
 // Points this browser's anon_token cookie at the account matching

@@ -10,7 +10,8 @@ import {
   getAccountStatus,
   setAvatarUrl,
   signOut,
-  updateDisplayName,
+  updateProfile,
+  changeEmail,
 } from "@/app/account/actions";
 import CreateAccountForm from "@/components/CreateAccountForm";
 import { useIdentity } from "@/components/IdentityProvider";
@@ -21,6 +22,9 @@ type Status = {
   username: string | null;
   displayName: string | null;
   avatarUrl: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  hasPassword: boolean;
   credits: number;
   hasAccount: boolean;
 };
@@ -40,9 +44,16 @@ export default function AccountPage() {
   const [status, setStatus] = useState<Status | undefined>(undefined);
   const [stats, setStats] = useState<Stats | undefined>(undefined);
   const [editingName, setEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState("");
+  const [nameInput, setNameInput] = useState(""); // display name
+  const [firstInput, setFirstInput] = useState("");
+  const [lastInput, setLastInput] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
   const [savingName, setSavingName] = useState(false);
+  const [changingEmail, setChangingEmail] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [savingEmail, setSavingEmail] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [currentPasswordInput, setCurrentPasswordInput] = useState("");
   const [newPasswordInput, setNewPasswordInput] = useState("");
@@ -101,6 +112,8 @@ export default function AccountPage() {
     getAccountStatus().then((s) => {
       setStatus(s);
       setNameInput(s.displayName ?? "");
+      setFirstInput(s.firstName ?? "");
+      setLastInput(s.lastName ?? "");
     });
     getAccountStats().then(setStats);
   }, []);
@@ -109,16 +122,35 @@ export default function AccountPage() {
     e.preventDefault();
     setNameError(null);
     setSavingName(true);
-    const result = await updateDisplayName(nameInput);
+    const result = await updateProfile({ displayName: nameInput, firstName: firstInput, lastName: lastInput });
     setSavingName(false);
     if (!result.ok) {
       setNameError(result.error);
       return;
     }
-    setStatus((s) => (s ? { ...s, displayName: nameInput.trim() } : s));
+    setStatus((s) =>
+      s ? { ...s, displayName: nameInput.trim(), firstName: firstInput.trim(), lastName: lastInput.trim() } : s
+    );
     setEditingName(false);
     refreshIdentity();
   }
+
+  async function handleChangeEmail(e: React.FormEvent) {
+    e.preventDefault();
+    setEmailError(null);
+    setSavingEmail(true);
+    const result = await changeEmail(emailInput, emailPassword);
+    setSavingEmail(false);
+    if (!result.ok) {
+      setEmailError(result.error);
+      return;
+    }
+    setStatus((s) => (s ? { ...s, email: result.email } : s));
+    setChangingEmail(false);
+    setEmailInput("");
+    setEmailPassword("");
+  }
+
 
   async function handleAvatarSelected(file: File | undefined) {
     if (!file) return;
@@ -225,6 +257,31 @@ export default function AccountPage() {
                     className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
                   />
                 </label>
+                <div className="flex gap-3">
+                  <label className="flex flex-1 flex-col gap-1.5">
+                    <span className="text-sm font-medium">First name</span>
+                    <input
+                      required
+                      autoComplete="given-name"
+                      value={firstInput}
+                      onChange={(e) => setFirstInput(e.target.value)}
+                      className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+                    />
+                  </label>
+                  <label className="flex flex-1 flex-col gap-1.5">
+                    <span className="text-sm font-medium">Last name</span>
+                    <input
+                      required
+                      autoComplete="family-name"
+                      value={lastInput}
+                      onChange={(e) => setLastInput(e.target.value)}
+                      className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+                    />
+                  </label>
+                </div>
+                <p className="text-xs text-black/40 dark:text-white">
+                  Your first and last name are only visible to you and admins.
+                </p>
                 {nameError && <p className="text-sm text-red-500">{nameError}</p>}
                 <div className="flex gap-2">
                   <button
@@ -239,6 +296,8 @@ export default function AccountPage() {
                     onClick={() => {
                       setEditingName(false);
                       setNameInput(status.displayName ?? "");
+                      setFirstInput(status.firstName ?? "");
+                      setLastInput(status.lastName ?? "");
                       setNameError(null);
                     }}
                     className="rounded-full border border-black/10 dark:border-white/15 px-4 py-1.5 text-sm"
@@ -252,8 +311,9 @@ export default function AccountPage() {
                 <div>
                   <p className="font-semibold">{status.displayName}</p>
                   <p className="text-sm text-black/50 dark:text-white">
-                    @{status.username} · {status.email}
+                    {status.firstName} {status.lastName} · @{status.username}
                   </p>
+                  <p className="text-sm text-black/50 dark:text-white">{status.email}</p>
                 </div>
                 <button
                   onClick={() => setEditingName(true)}
@@ -262,6 +322,66 @@ export default function AccountPage() {
                   Edit
                 </button>
               </div>
+            )}
+
+            {changingEmail ? (
+              <form onSubmit={handleChangeEmail} className="flex flex-col gap-2 mt-2">
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-sm font-medium">New email</span>
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+                  />
+                </label>
+                {status.hasPassword && (
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-sm font-medium">Current password</span>
+                    <input
+                      type="password"
+                      required
+                      autoComplete="current-password"
+                      value={emailPassword}
+                      onChange={(e) => setEmailPassword(e.target.value)}
+                      className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+                    />
+                  </label>
+                )}
+                {emailError && <p className="text-sm text-red-500">{emailError}</p>}
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={savingEmail}
+                    className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+                  >
+                    {savingEmail ? "Saving…" : "Save email"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChangingEmail(false);
+                      setEmailInput("");
+                      setEmailPassword("");
+                      setEmailError(null);
+                    }}
+                    className="rounded-full border border-black/10 dark:border-white/15 px-4 py-1.5 text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              !editingName && (
+                <button
+                  onClick={() => setChangingEmail(true)}
+                  className="self-start text-sm text-blue-600 dark:text-blue-400 underline"
+                >
+                  Change email
+                </button>
+              )
             )}
           </div>
 

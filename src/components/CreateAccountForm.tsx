@@ -66,7 +66,7 @@ export default function CreateAccountForm({ onCreated }: { onCreated?: () => voi
           </label>
         </div>
         <p className="-mt-1 text-xs text-black/40 dark:text-white">
-          Your real name is only visible to admins, never to other users.
+          Your real name is only visible to you and admins, never to other users.
         </p>
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium">Username</span>

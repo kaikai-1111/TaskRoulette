@@ -17,6 +17,12 @@ import { TEMPLATE_TYPES, type TemplateType } from "@/lib/templates/types";
 import { useCredits } from "@/components/CreditsProvider";
 import CreateAccountForm from "@/components/CreateAccountForm";
 import ImageSearch from "@/components/ImageSearch";
+import SurveyBuilder, {
+  draftsFromConfig,
+  draftsToConfig,
+  newQuestion,
+  type QuestionDraft,
+} from "@/components/SurveyBuilder";
 
 const NEEDS_TARGET_LABEL: TemplateType[] = ["BOUNDING_BOX", "POINT"];
 
@@ -45,12 +51,14 @@ const ITEMS_COPY: Record<TemplateType, { label: string; placeholder: string }> =
     label: "Things to photograph, one per line",
     placeholder: "your desk right now\na plant near you",
   },
+  // Surveys have no item list — the question builder replaces it.
+  SURVEY: { label: "", placeholder: "" },
 };
 
 // Purpose is an independent, creator-overridable tag (annotating existing
 // data vs. contributing new data) — this just picks a sensible starting
 // point whenever the task type changes.
-const COLLECTING_TEMPLATE_TYPES: TemplateType[] = ["VIDEO_RECORDING", "PHOTO_CAPTURE"];
+const COLLECTING_TEMPLATE_TYPES: TemplateType[] = ["VIDEO_RECORDING", "PHOTO_CAPTURE", "SURVEY"];
 function defaultPurposeFor(t: TemplateType): "ANNOTATING" | "COLLECTING" {
   return COLLECTING_TEMPLATE_TYPES.includes(t) ? "COLLECTING" : "ANNOTATING";
 }
@@ -89,6 +97,7 @@ function CreatePageInner() {
   const [mediaMode, setMediaMode] = useState<"image" | "text">("image"); // LABELING only
   const [maxDurationSeconds, setMaxDurationSeconds] = useState<number>(ECONOMY.DEFAULT_VIDEO_SECONDS);
   const [itemsRaw, setItemsRaw] = useState("");
+  const [questions, setQuestions] = useState<QuestionDraft[]>(() => [newQuestion()]); // SURVEY only
   const [targetResponsesPerItem, setTargetResponsesPerItem] = useState<number>(
     ECONOMY.DEFAULT_TARGET_RESPONSES_PER_ITEM
   );
@@ -137,6 +146,8 @@ function CreatePageInner() {
       } else if (src.templateType === "LABELING") {
         const options = config.options;
         setOptionsInput(Array.isArray(options) ? options.join(", ") : "");
+      } else if (src.templateType === "SURVEY") {
+        setQuestions(draftsFromConfig(config));
       } else if (src.templateType === "VIDEO_RECORDING") {
         setMaxDurationSeconds(
           typeof config.maxDurationSeconds === "number" ? config.maxDurationSeconds : ECONOMY.DEFAULT_VIDEO_SECONDS
@@ -208,13 +219,20 @@ function CreatePageInner() {
       };
     } else if (templateType === "FREEFORM_DRAWING" || templateType === "PHOTO_CAPTURE") {
       config = {};
+    } else if (templateType === "SURVEY") {
+      config = draftsToConfig(questions);
     } else {
       config = { maxDurationSeconds };
     }
 
-    const challengeItems = usesImageItems
-      ? items.map((mediaUrl) => ({ mediaUrl }))
-      : items.map((textContent) => ({ textContent }));
+    // A survey is a single item (the whole question set on one card); its
+    // text is just the title so exports/lists have something to show.
+    const challengeItems =
+      templateType === "SURVEY"
+        ? [{ textContent: prompt.trim() }]
+        : usesImageItems
+          ? items.map((mediaUrl) => ({ mediaUrl }))
+          : items.map((textContent) => ({ textContent }));
     const resolvedTimeLimit = noTimeLimit ? ECONOMY.NO_TIME_LIMIT : timeLimitSeconds;
 
     setSubmitting(true);
@@ -376,6 +394,8 @@ function CreatePageInner() {
                 onClick={() => {
                   setTemplateType(t.value);
                   setPurpose(defaultPurposeFor(t.value));
+                  // Surveys take longer than a 30s task, so start them untimed.
+                  setNoTimeLimit(t.value === "SURVEY");
                 }}
                 className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
                   templateType === t.value
@@ -406,7 +426,9 @@ function CreatePageInner() {
                     ? "e.g. Show us your setup"
                     : templateType === "PHOTO_CAPTURE"
                       ? "e.g. Show us what's on your desk"
-                      : "e.g. Is this a good pun?"
+                      : templateType === "SURVEY"
+                        ? "e.g. Lunch habits survey"
+                        : "e.g. Is this a good pun?"
             }
             className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 disabled:opacity-50"
           />
@@ -502,42 +524,48 @@ function CreatePageInner() {
           </fieldset>
         )}
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">
-            {usesImageItems ? "Images — upload files or paste URLs, one per line" : itemsCopy.label}
-          </span>
-          {usesImageItems && !fieldsLocked && (
-            <div className="flex items-center gap-2">
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                multiple
-                disabled={uploading}
-                onChange={(e) => {
-                  handleFilesSelected(e.target.files);
-                  e.target.value = "";
-                }}
-                className="flex-1 text-sm text-black/60 dark:text-white file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-blue-700 disabled:opacity-50"
-              />
-              {uploading && <span className="text-xs text-black/40 dark:text-white">Uploading…</span>}
-            </div>
-          )}
-          {usesImageItems && !fieldsLocked && <ImageSearch onAdd={appendItems} />}
-          <textarea
-            required
-            disabled={fieldsLocked}
-            rows={5}
-            value={itemsRaw}
-            onChange={(e) => setItemsRaw(e.target.value)}
-            placeholder={itemsCopy.placeholder}
-            className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 font-mono text-sm disabled:opacity-50"
-          />
-          <span className="text-xs text-black/40 dark:text-white">{items.length} item(s)</span>
-        </label>
+        {templateType === "SURVEY" ? (
+          <SurveyBuilder questions={questions} onChange={setQuestions} disabled={fieldsLocked} />
+        ) : (
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">
+              {usesImageItems ? "Images — upload files or paste URLs, one per line" : itemsCopy.label}
+            </span>
+            {usesImageItems && !fieldsLocked && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  multiple
+                  disabled={uploading}
+                  onChange={(e) => {
+                    handleFilesSelected(e.target.files);
+                    e.target.value = "";
+                  }}
+                  className="flex-1 text-sm text-black/60 dark:text-white file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-blue-700 disabled:opacity-50"
+                />
+                {uploading && <span className="text-xs text-black/40 dark:text-white">Uploading…</span>}
+              </div>
+            )}
+            {usesImageItems && !fieldsLocked && <ImageSearch onAdd={appendItems} />}
+            <textarea
+              required
+              disabled={fieldsLocked}
+              rows={5}
+              value={itemsRaw}
+              onChange={(e) => setItemsRaw(e.target.value)}
+              placeholder={itemsCopy.placeholder}
+              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 font-mono text-sm disabled:opacity-50"
+            />
+            <span className="text-xs text-black/40 dark:text-white">{items.length} item(s)</span>
+          </label>
+        )}
 
         <div className="flex gap-4">
           <label className="flex flex-1 flex-col gap-1.5">
-            <span className="text-sm font-medium">Responses needed per item</span>
+            <span className="text-sm font-medium">
+              {templateType === "SURVEY" ? "Respondents needed" : "Responses needed per item"}
+            </span>
             <input
               type="number"
               min={ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM}
@@ -577,7 +605,7 @@ function CreatePageInner() {
             onChange={(e) => setCategory(e.target.checked ? "PRETRAINING" : "FUN")}
             className="disabled:opacity-50"
           />
-          This is for training my own model (vs. just for fun)
+          This is for real data collection — training a model, research, etc. (vs. just for fun)
         </label>
 
         <fieldset disabled={fieldsLocked} className="flex flex-col gap-1.5 disabled:opacity-50">
@@ -622,7 +650,12 @@ function CreatePageInner() {
 
         <button
           type="submit"
-          disabled={submitting || uploading || items.length === 0 || (!editChallengeId && !canAfford)}
+          disabled={
+            submitting ||
+            uploading ||
+            (templateType === "SURVEY" ? questions.length === 0 : items.length === 0) ||
+            (!editChallengeId && !canAfford)
+          }
           className="rounded-full bg-orange-500 hover:bg-orange-600 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
         >
           {submitting

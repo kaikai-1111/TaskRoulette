@@ -10,7 +10,8 @@ export type TemplateType =
   | "LABELING"
   | "FREEFORM_DRAWING"
   | "VIDEO_RECORDING"
-  | "PHOTO_CAPTURE";
+  | "PHOTO_CAPTURE"
+  | "SURVEY";
 
 export const TEMPLATE_TYPES: { value: TemplateType; label: string; blurb: string }[] = [
   {
@@ -42,6 +43,11 @@ export const TEMPLATE_TYPES: { value: TemplateType; label: string; blurb: string
     value: "PHOTO_CAPTURE",
     label: "Take a picture",
     blurb: "Doer takes a photo on their camera. For collecting new data rather than annotating existing data.",
+  },
+  {
+    value: "SURVEY",
+    label: "Survey",
+    blurb: "Doers answer a set of questions you write — multiple choice, ratings, or free text. For opinions and data of any kind.",
   },
 ];
 
@@ -102,6 +108,29 @@ export interface PhotoCaptureAnswer {
   mediaUrl: string; // uploaded photo, served from /uploads/images/...
 }
 
+export type SurveyQuestionKind = "SINGLE" | "MULTI" | "TEXT" | "SCALE";
+
+export interface SurveyQuestion {
+  id: string; // stable within the survey; answers refer to it
+  text: string;
+  kind: SurveyQuestionKind; // SINGLE = pick one, MULTI = pick any, SCALE = 1..scaleMax
+  options?: string[]; // SINGLE / MULTI only
+  scaleMax?: number; // SCALE only
+  required: boolean;
+}
+
+// One challenge item holds the whole survey: a respondent answers every
+// question on one card, so targetResponsesPerItem is "respondents needed".
+export interface SurveyConfig {
+  questions: SurveyQuestion[];
+}
+
+export type SurveyAnswerValue = string | string[] | number;
+
+export interface SurveyAnswer {
+  responses: { questionId: string; value: SurveyAnswerValue | null }[]; // null = skipped optional question
+}
+
 export type ChallengeConfigFor<T extends TemplateType> = T extends "BOUNDING_BOX"
   ? BoundingBoxConfig
   : T extends "POINT"
@@ -112,7 +141,9 @@ export type ChallengeConfigFor<T extends TemplateType> = T extends "BOUNDING_BOX
         ? FreeformDrawingConfig
         : T extends "PHOTO_CAPTURE"
           ? PhotoCaptureConfig
-          : VideoRecordingConfig;
+          : T extends "SURVEY"
+            ? SurveyConfig
+            : VideoRecordingConfig;
 
 export type ChallengeAnswerFor<T extends TemplateType> = T extends "BOUNDING_BOX"
   ? BoundingBoxAnswer
@@ -124,7 +155,9 @@ export type ChallengeAnswerFor<T extends TemplateType> = T extends "BOUNDING_BOX
         ? FreeformDrawingAnswer
         : T extends "PHOTO_CAPTURE"
           ? PhotoCaptureAnswer
-          : VideoRecordingAnswer;
+          : T extends "SURVEY"
+            ? SurveyAnswer
+            : VideoRecordingAnswer;
 
 export type AnyChallengeConfig =
   | BoundingBoxConfig
@@ -132,7 +165,8 @@ export type AnyChallengeConfig =
   | LabelingConfig
   | FreeformDrawingConfig
   | VideoRecordingConfig
-  | PhotoCaptureConfig;
+  | PhotoCaptureConfig
+  | SurveyConfig;
 
 export type AnyChallengeAnswer =
   | BoundingBoxAnswer
@@ -140,7 +174,8 @@ export type AnyChallengeAnswer =
   | LabelingAnswer
   | FreeformDrawingAnswer
   | VideoRecordingAnswer
-  | PhotoCaptureAnswer;
+  | PhotoCaptureAnswer
+  | SurveyAnswer;
 
 // One ChallengeItem as handed to a capture component: the item's own media plus
 // the parsed (not raw JSON string) challenge-level config and prompt.

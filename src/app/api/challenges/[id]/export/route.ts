@@ -1,11 +1,27 @@
 import { NextResponse } from "next/server";
 import { getChallengeResults } from "@/app/actions";
+import { surveyToCsv } from "@/lib/templates/survey";
+import type { SurveyConfig } from "@/lib/templates/types";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const challenge = await getChallengeResults(id);
   if (!challenge) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
+
+  // Survey creators usually want a spreadsheet: one row per respondent.
+  if (challenge.templateType === "SURVEY" && new URL(req.url).searchParams.get("format") === "csv") {
+    const csv = surveyToCsv(
+      JSON.parse(challenge.config) as SurveyConfig,
+      challenge.items.flatMap((i) => i.submissions.map((s) => ({ answer: s.answer, createdAt: s.createdAt })))
+    );
+    return new NextResponse(csv, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="survey-${challenge.id}.csv"`,
+      },
+    });
   }
 
   const payload = {

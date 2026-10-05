@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { getChallengeResults } from "@/app/actions";
 import { drawingStrokes, formatAnswerSummary, photoAnswerUrl, videoAnswerUrl } from "@/lib/templates/format";
-import type { TemplateType } from "@/lib/templates/types";
+import { aggregateSurvey, type QuestionResult } from "@/lib/templates/survey";
+import type { SurveyConfig, TemplateType } from "@/lib/templates/types";
 
 export default async function ChallengeResultsPage({
   params,
@@ -40,7 +41,24 @@ export default async function ChallengeResultsPage({
       >
         Export JSON
       </a>
+      {challenge.templateType === "SURVEY" && (
+        <a
+          href={`/api/challenges/${challenge.id}/export?format=csv`}
+          className="inline-block mb-6 ml-2 rounded-full border border-black/10 dark:border-white/15 px-5 py-2.5 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/10 active:scale-95 transition"
+        >
+          Export CSV
+        </a>
+      )}
 
+      {challenge.templateType === "SURVEY" ? (
+        <SurveyResults
+          results={aggregateSurvey(
+            JSON.parse(challenge.config) as SurveyConfig,
+            challenge.items.flatMap((i) => i.submissions.map((s) => s.answer))
+          )}
+          respondents={totalSubmissions}
+        />
+      ) : (
       <div className="flex flex-col gap-4">
         {challenge.items.map((item) => (
           <div key={item.id} className="rounded-lg border border-black/10 dark:border-white/15 p-4">
@@ -107,6 +125,61 @@ export default async function ChallengeResultsPage({
           </div>
         ))}
       </div>
+      )}
+    </div>
+  );
+}
+
+function SurveyResults({ results, respondents }: { results: QuestionResult[]; respondents: number }) {
+  if (respondents === 0) {
+    return <p className="text-sm text-black/40 dark:text-white">No responses yet.</p>;
+  }
+  return (
+    <div className="flex flex-col gap-4">
+      {results.map((r, i) => {
+        const max = Math.max(1, ...(r.counts ?? []).map((c) => c.count));
+        return (
+          <div key={r.question.id} className="rounded-lg border border-black/10 dark:border-white/15 p-4">
+            <p className="font-medium text-sm">
+              {i + 1}. {r.question.text}
+            </p>
+            <p className="mb-3 text-xs text-black/40 dark:text-white">
+              {r.answered} of {respondents} answered
+              {r.average !== undefined && ` · average ${r.average.toFixed(2)} / ${r.question.scaleMax ?? 5}`}
+            </p>
+
+            {r.counts && (
+              <ul className="flex flex-col gap-1.5">
+                {r.counts.map((c) => (
+                  <li key={c.label} className="text-xs">
+                    <div className="flex justify-between">
+                      <span className="truncate pr-2">{c.label}</span>
+                      <span className="text-black/50 dark:text-white">
+                        {c.count}
+                        {r.answered > 0 && ` (${Math.round((c.count / r.answered) * 100)}%)`}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 h-1.5 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                      <div className="h-full bg-blue-500" style={{ width: `${(c.count / max) * 100}%` }} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {r.texts && (
+              <ul className="flex flex-col gap-1.5 max-h-72 overflow-y-auto">
+                {r.texts.length === 0 && <li className="text-xs text-black/40 dark:text-white">No answers.</li>}
+                {r.texts.map((t, n) => (
+                  <li key={n} className="rounded bg-black/5 dark:bg-white/10 px-2 py-1 text-sm whitespace-pre-wrap">
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Task Roulette",
-  description: "Quick, weird 30-second tasks for AI training data.",
+  description: "Quick tasks and surveys that crowdsource data — for AI training and anything else.",
 };
 
 // Runs before paint so the right theme applies immediately, instead of

@@ -8,6 +8,10 @@ import type {
   LabelingAnswer,
   LabelingConfig,
   PhotoCaptureAnswer,
+  SurveyAnswer,
+  SurveyConfig,
+  SurveyQuestion,
+  SurveyQuestionKind,
   PointAnswer,
   PointConfig,
   TemplateType,
@@ -25,12 +29,65 @@ function requireTargetLabel(config: unknown, kind: string): { targetLabel: strin
   return { targetLabel: c.targetLabel.trim() };
 }
 
+const SURVEY_KINDS: SurveyQuestionKind[] = ["SINGLE", "MULTI", "TEXT", "SCALE"];
+
+function validateSurveyConfig(config: unknown): SurveyConfig {
+  const c = config as Partial<SurveyConfig>;
+  if (!Array.isArray(c.questions) || c.questions.length === 0) {
+    throw new ValidationError("Add at least one survey question.");
+  }
+  if (c.questions.length > ECONOMY.MAX_SURVEY_QUESTIONS) {
+    throw new ValidationError(`A survey can have at most ${ECONOMY.MAX_SURVEY_QUESTIONS} questions.`);
+  }
+  const seen = new Set<string>();
+  const questions = c.questions.map((raw, i): SurveyQuestion => {
+    const n = i + 1;
+    const q = raw as Partial<SurveyQuestion>;
+    const id = typeof q.id === "string" ? q.id.trim().slice(0, 40) : "";
+    if (!id || seen.has(id)) throw new ValidationError(`Question ${n} is malformed — reload and try again.`);
+    seen.add(id);
+    const text = typeof q.text === "string" ? q.text.trim() : "";
+    if (!text) throw new ValidationError(`Question ${n} needs some text.`);
+    if (text.length > 300) throw new ValidationError(`Question ${n} is too long (max 300 characters).`);
+    if (!q.kind || !SURVEY_KINDS.includes(q.kind)) throw new ValidationError(`Question ${n} has an unknown type.`);
+    const base = { id, text, kind: q.kind, required: q.required !== false };
+
+    if (q.kind === "SINGLE" || q.kind === "MULTI") {
+      const options = Array.isArray(q.options)
+        ? q.options.map((o) => (typeof o === "string" ? o.trim() : "")).filter(Boolean)
+        : [];
+      if (new Set(options).size !== options.length) {
+        throw new ValidationError(`Question ${n} has duplicate answer options.`);
+      }
+      if (options.length < 2 || options.length > ECONOMY.MAX_SURVEY_OPTIONS) {
+        throw new ValidationError(
+          `Question ${n} needs between 2 and ${ECONOMY.MAX_SURVEY_OPTIONS} answer options.`
+        );
+      }
+      if (options.some((o) => o.length > 100)) {
+        throw new ValidationError(`Question ${n} has an option over 100 characters.`);
+      }
+      return { ...base, options };
+    }
+    if (q.kind === "SCALE") {
+      const max = q.scaleMax === undefined ? 5 : Number(q.scaleMax);
+      if (!Number.isInteger(max) || max < 3 || max > 10) {
+        throw new ValidationError(`Question ${n}: a rating scale goes up to between 3 and 10.`);
+      }
+      return { ...base, scaleMax: max };
+    }
+    return base;
+  });
+  return { questions };
+}
+
 export function validateConfig(templateType: TemplateType, config: unknown): AnyChallengeConfig {
   if (templateType === "BOUNDING_BOX") return requireTargetLabel(config, "Bounding box");
   if (templateType === "POINT") return requireTargetLabel(config, "Find-the-spot");
 
   if (templateType === "FREEFORM_DRAWING") return {};
   if (templateType === "PHOTO_CAPTURE") return {};
+  if (templateType === "SURVEY") return validateSurveyConfig(config);
 
   if (templateType === "VIDEO_RECORDING") {
     const c = config as Partial<VideoRecordingConfig>;
@@ -113,6 +170,53 @@ export function validateAnswer(
       throw new ValidationError("Draw something before submitting.");
     }
     return { strokes: a.strokes as [number, number][][] };
+  }
+
+  if (templateType === "SURVEY") {
+    const survey = config as SurveyConfig;
+    const a = answer as Partial<SurveyAnswer>;
+    if (!Array.isArray(a.responses)) throw new ValidationError("Answer the survey before submitting.");
+    const given = new Map<string, unknown>();
+    for (const r of a.responses) {
+      if (r && typeof r === "object" && typeof r.questionId === "string") given.set(r.questionId, r.value);
+    }
+    const responses = survey.questions.map((q) => {
+      const v = given.get(q.id);
+      const blank =
+        v === undefined ||
+        v === null ||
+        (typeof v === "string" && !v.trim()) ||
+        (Array.isArray(v) && v.length === 0);
+      if (blank) {
+        if (q.required) throw new ValidationError(`Please answer: "${q.text}"`);
+        return { questionId: q.id, value: null };
+      }
+      if (q.kind === "SINGLE") {
+        if (typeof v !== "string" || !q.options?.includes(v)) {
+          throw new ValidationError(`Pick one of the offered options for: "${q.text}"`);
+        }
+        return { questionId: q.id, value: v };
+      }
+      if (q.kind === "MULTI") {
+        if (
+          !Array.isArray(v) ||
+          v.some((x) => typeof x !== "string" || !q.options?.includes(x)) ||
+          new Set(v).size !== v.length
+        ) {
+          throw new ValidationError(`Pick from the offered options for: "${q.text}"`);
+        }
+        return { questionId: q.id, value: v as string[] };
+      }
+      if (q.kind === "SCALE") {
+        if (typeof v !== "number" || !Number.isInteger(v) || v < 1 || v > (q.scaleMax ?? 5)) {
+          throw new ValidationError(`Pick a rating for: "${q.text}"`);
+        }
+        return { questionId: q.id, value: v };
+      }
+      if (typeof v !== "string") throw new ValidationError(`Type an answer for: "${q.text}"`);
+      return { questionId: q.id, value: v.trim().slice(0, ECONOMY.MAX_SURVEY_TEXT_ANSWER_CHARS) };
+    });
+    return { responses };
   }
 
   if (templateType === "PHOTO_CAPTURE") {

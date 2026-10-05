@@ -19,6 +19,7 @@ enum TemplateType {
   FREEFORM_DRAWING
   VIDEO_RECORDING
   PHOTO_CAPTURE
+  SURVEY
 }
 
 enum ChallengeCategory {
