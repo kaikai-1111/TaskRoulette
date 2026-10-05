@@ -108,6 +108,14 @@ model User {
   // granted by username, see grantAdminAction in app/admin/actions.ts.
   isAdmin Boolean @default(false)
 
+  // Set by an admin from /admin/users/[id]. Applies to the underlying device
+  // identity (the row), account or not, and is enforced server-side on
+  // every write path (see getActiveUser in lib/identity.ts) plus a
+  // full-page BanGate. banReason is shown to the banned user.
+  isBanned  Boolean   @default(false)
+  bannedAt  DateTime?
+  banReason String?
+
   // Self-attested age/ToS gate, shown once before first use of the app.
   ageAttested Boolean @default(false)
 

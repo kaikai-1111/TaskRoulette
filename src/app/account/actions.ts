@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { OAuth2Client } from "google-auth-library";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, ANON_COOKIE_NAME } from "@/lib/identity";
+import { getActiveUser, getCurrentUser, ANON_COOKIE_NAME } from "@/lib/identity";
 import { isAdmin } from "@/lib/admin";
 import { hashPassword, verifyPassword, MIN_PASSWORD_LENGTH } from "@/lib/password";
 import { isValidUsername, normalizeUsername, USERNAME_HINT } from "@/lib/username";
@@ -21,6 +21,8 @@ export async function getAccountStatus() {
     // Only whether it's set — the names themselves are admin-only and never
     // leave the server through here.
     hasName: !!(user.firstName && user.lastName),
+    isBanned: user.isBanned,
+    banReason: user.banReason,
     // Admins (ADMIN_PASSWORD) can post challenges without an account too.
     canPostWithoutAccount: await isAdmin(),
   };
@@ -36,7 +38,7 @@ export async function submitName(
   firstName: string,
   lastName: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const user = await getCurrentUser();
+  const user = await getActiveUser();
   if (!user.email || !user.username) return { ok: false, error: "Create an account first." };
   const first = cleanName(firstName);
   const last = cleanName(lastName);
@@ -59,7 +61,7 @@ export async function signOut() {
 export async function setAvatarUrl(
   url: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const user = await getCurrentUser();
+  const user = await getActiveUser();
   if (!url.trim()) return { ok: false, error: "No photo uploaded." };
   await prisma.user.update({ where: { id: user.id }, data: { avatarUrl: url } });
   return { ok: true };
@@ -120,7 +122,7 @@ export async function createAccount(input: {
 
   const displayName = input.displayName.trim().slice(0, 40) || username;
 
-  const user = await getCurrentUser();
+  const user = await getActiveUser();
   const passwordHash = await hashPassword(input.password);
 
   try {
@@ -144,7 +146,7 @@ export async function changePassword(
   currentPassword: string,
   newPassword: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const user = await getCurrentUser();
+  const user = await getActiveUser();
   if (!user.email || !user.username) {
     return { ok: false, error: "Create an account first." };
   }
@@ -172,7 +174,7 @@ export async function changePassword(
 export async function deleteAccount(
   password: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const user = await getCurrentUser();
+  const user = await getActiveUser();
   if (!user.email || !user.username) {
     return { ok: false, error: "No account to delete." };
   }
@@ -207,7 +209,7 @@ export async function updateDisplayName(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const trimmed = displayName.trim().slice(0, 40);
   if (!trimmed) return { ok: false, error: "Display name can't be empty." };
-  const user = await getCurrentUser();
+  const user = await getActiveUser();
   await prisma.user.update({ where: { id: user.id }, data: { displayName: trimmed } });
   return { ok: true };
 }
@@ -223,6 +225,7 @@ export async function signIn(
   if (!user || !user.passwordHash || !(await verifyPassword(password, user.passwordHash))) {
     return { ok: false, error: "Wrong email or password." };
   }
+  if (user.isBanned) return { ok: false, error: "This account has been banned." };
 
   const cookieStore = await cookies();
   cookieStore.set(ANON_COOKIE_NAME, user.anonToken, {
@@ -277,6 +280,7 @@ export async function signInWithGoogle(
 
   if (!user) {
     const current = await getCurrentUser();
+    if (current.isBanned) return { ok: false, error: "This device has been banned." };
     const base =
       normalizeUsername(email.split("@")[0]).replace(/[^a-z0-9_]/g, "_").slice(0, 20) || "user";
     let username = base.length >= 3 ? base : `${base}_user`.slice(0, 20);
@@ -303,6 +307,8 @@ export async function signInWithGoogle(
     }
     if (!user) return { ok: false, error: "Couldn't create an account — try again." };
   }
+
+  if (user.isBanned) return { ok: false, error: "This account has been banned." };
 
   const cookieStore = await cookies();
   cookieStore.set(ANON_COOKIE_NAME, user.anonToken, {

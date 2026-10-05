@@ -18,7 +18,8 @@ const EXT_BY_CONTENT_TYPE: Record<string, string> = {
 };
 
 export async function POST(req: Request) {
-  await getCurrentUser(); // requires the anon_token cookie; also lazily provisions the user row
+  const user = await getCurrentUser(); // requires the anon_token cookie; also lazily provisions the user row
+  if (user.isBanned) return NextResponse.json({ error: "This account has been banned." }, { status: 403 });
 
   const contentType = req.headers.get("content-type") ?? "";
   const ext = EXT_BY_CONTENT_TYPE[contentType];

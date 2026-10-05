@@ -14,7 +14,8 @@ interface WikimediaPage {
 }
 
 export async function GET(req: Request) {
-  await getCurrentUser(); // requires the anon_token cookie
+  const user = await getCurrentUser(); // requires the anon_token cookie
+  if (user.isBanned) return NextResponse.json({ error: "This account has been banned." }, { status: 403 });
 
   const params = new URL(req.url).searchParams;
   const q = params.get("q")?.trim();

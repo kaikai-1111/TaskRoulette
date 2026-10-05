@@ -4,6 +4,7 @@ import Script from "next/script";
 import NavHeader from "@/components/NavHeader";
 import AgeGate from "@/components/AgeGate";
 import NameGate from "@/components/NameGate";
+import BanGate from "@/components/BanGate";
 import { CreditsProvider } from "@/components/CreditsProvider";
 import { IdentityProvider } from "@/components/IdentityProvider";
 import "./globals.css";
@@ -50,9 +51,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <IdentityProvider>
             <NavHeader />
             <main className="flex flex-1 flex-col">
-              <AgeGate>
-                <NameGate>{children}</NameGate>
-              </AgeGate>
+              <BanGate>
+                <AgeGate>
+                  <NameGate>{children}</NameGate>
+                </AgeGate>
+              </BanGate>
             </main>
           </IdentityProvider>
         </CreditsProvider>

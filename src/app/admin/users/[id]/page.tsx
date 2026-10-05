@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { isAdmin } from "@/lib/admin";
-import { getUserDetail } from "@/app/admin/actions";
+import { getUserDetail, unbanUserAction } from "@/app/admin/actions";
+import BanUserForm from "@/components/admin/BanUserForm";
 
 export default async function AdminUserDetailPage({
   params,
@@ -19,7 +20,7 @@ export default async function AdminUserDetailPage({
   return (
     <div className="mx-auto w-full max-w-lg px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{user.username ? `@${user.username}` : "Deleted account"}</h1>
+        <h1 className="text-2xl font-bold">{user.username ? `@${user.username}` : `Anonymous ${user.id.slice(0, 8)}`}</h1>
         <Link href="/admin/users" className="text-sm text-black/50 dark:text-white underline">
           All users
         </Link>
@@ -52,6 +53,41 @@ export default async function AdminUserDetailPage({
         <Detail label="Sign-in methods" value={[user.hasPassword && "Password", user.hasGoogle && "Google"].filter(Boolean).join(", ") || "None"} />
         <Detail label="Age attested" value={user.ageAttested ? "Yes" : "No"} />
       </dl>
+
+      <div className="mb-6 rounded-lg border border-black/10 dark:border-white/15 p-4">
+        {user.isBanned ? (
+          <>
+            <p className="text-sm font-semibold text-red-500">
+              Banned {user.bannedAt ? `on ${new Date(user.bannedAt).toLocaleDateString()}` : ""}
+            </p>
+            {user.banReason && <p className="mt-1 text-sm">&ldquo;{user.banReason}&rdquo;</p>}
+            <p className="mt-1 text-xs text-black/50 dark:text-white">
+              Unbanning lifts the block but doesn&apos;t reactivate challenges taken down with it.
+            </p>
+            <form action={unbanUserAction.bind(null, user.id)} className="mt-3">
+              <button
+                type="submit"
+                className="rounded-full border border-black/10 dark:border-white/15 px-4 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+              >
+                Lift ban
+              </button>
+            </form>
+          </>
+        ) : user.isAdmin ? (
+          <p className="text-sm text-black/50 dark:text-white">
+            Admins can&apos;t be banned — revoke admin access on the Admins page first.
+          </p>
+        ) : (
+          <>
+            <p className="mb-2 text-sm font-semibold">Ban this user</p>
+            <p className="mb-3 text-xs text-black/50 dark:text-white">
+              Blocks answering, posting, uploads and sign-in for this account/device. A new
+              device or account can evade it, so it&apos;s a deterrent, not a wall.
+            </p>
+            <BanUserForm userId={user.id} />
+          </>
+        )}
+      </div>
 
       <h2 className="text-sm font-semibold mb-2">Recent challenges</h2>
       {user.challenges.length === 0 ? (

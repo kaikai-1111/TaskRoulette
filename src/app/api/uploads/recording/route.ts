@@ -11,7 +11,8 @@ import { ECONOMY } from "@/lib/economy";
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "recordings");
 
 export async function POST(req: Request) {
-  await getCurrentUser(); // requires the anon_token cookie; also lazily provisions the user row
+  const user = await getCurrentUser(); // requires the anon_token cookie; also lazily provisions the user row
+  if (user.isBanned) return NextResponse.json({ error: "This account has been banned." }, { status: 403 });
 
   const contentType = req.headers.get("content-type") ?? "";
   if (!contentType.startsWith("video/")) {

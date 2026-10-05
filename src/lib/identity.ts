@@ -36,3 +36,19 @@ export async function getCurrentUser() {
     return prisma.user.findUniqueOrThrow({ where: { anonToken: token } });
   }
 }
+
+export class BannedError extends Error {
+  constructor() {
+    super("This account has been banned.");
+    this.name = "BannedError";
+  }
+}
+
+// For anything that writes: reads are harmless (BanGate hides the UI), but
+// a banned device must not be able to post, answer, upload, or edit by
+// calling the server actions/routes directly.
+export async function getActiveUser() {
+  const user = await getCurrentUser();
+  if (user.isBanned) throw new BannedError();
+  return user;
+}

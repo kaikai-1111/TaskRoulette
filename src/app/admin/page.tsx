@@ -55,7 +55,10 @@ export default async function AdminPage() {
                   <p className="font-medium">{flag.challenge.prompt}</p>
                   <p className="text-black/50 dark:text-white text-xs mt-1">
                     {flag.challenge.templateType.toLowerCase()} · status {flag.challenge.status.toLowerCase()} ·
-                    posted by {flag.challenge.creator.displayName ?? flag.challenge.creator.id.slice(0, 8)}
+                    posted by{" "}
+                    <Link href={`/admin/users/${flag.challenge.creator.id}`} className="underline">
+                      {flag.challenge.creator.displayName ?? flag.challenge.creator.id.slice(0, 8)}
+                    </Link>
                   </p>
                 </div>
               )}
@@ -68,7 +71,9 @@ export default async function AdminPage() {
                   </p>
                   <p className="text-black/50 dark:text-white text-xs mt-1">
                     status {flag.submission.status.toLowerCase()} · submitted by{" "}
-                    {flag.submission.submitter.displayName ?? flag.submission.submitter.id.slice(0, 8)}
+                    <Link href={`/admin/users/${flag.submission.submitter.id}`} className="underline">
+                      {flag.submission.submitter.displayName ?? flag.submission.submitter.id.slice(0, 8)}
+                    </Link>
                   </p>
                 </div>
               )}

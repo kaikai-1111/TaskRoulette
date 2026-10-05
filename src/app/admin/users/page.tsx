@@ -60,8 +60,13 @@ export default async function AdminUsersPage({
                   href={`/admin/users/${u.id}`}
                   className="font-medium text-blue-600 dark:text-blue-400 hover:underline"
                 >
-                  @{u.username}
+                  {u.username ? `@${u.username}` : `Anonymous ${u.id.slice(0, 8)}`}
                 </Link>
+                {u.isBanned && (
+                  <span className="ml-2 text-xs rounded-full px-2 py-0.5 bg-red-500/15 text-red-500">
+                    banned
+                  </span>
+                )}
                 {u.isAdmin && (
                   <span className="ml-2 text-xs rounded-full px-2 py-0.5 bg-orange-500/20 text-orange-600 dark:text-orange-400">
                     admin
@@ -69,7 +74,7 @@ export default async function AdminUsersPage({
                 )}
                 <p className="text-xs text-black/50 dark:text-white truncate">
                   {u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : "no name on file yet"} ·{" "}
-                  {u.email}
+                  {u.email ?? "no email"}
                 </p>
               </div>
               <span className="shrink-0 text-xs text-black/40 dark:text-white">

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/identity";
+import { getActiveUser, getCurrentUser } from "@/lib/identity";
 import { isAdmin } from "@/lib/admin";
 import { ECONOMY, InsufficientCreditsError } from "@/lib/economy";
 import { validateAnswer, validateConfig, ValidationError } from "@/lib/templates/validate";
@@ -16,6 +16,7 @@ import { Prisma } from "@prisma/client";
 // which Prisma's declarative filters can't express directly.
 export async function getNextFeedItem(): Promise<FeedItem | null> {
   const user = await getCurrentUser();
+  if (user.isBanned) return null;
 
   const rows = await prisma.$queryRaw<{ itemId: string }[]>`
     SELECT ci."id" as "itemId"
@@ -56,6 +57,7 @@ export async function getNextFeedItem(): Promise<FeedItem | null> {
 // jumps in directly from the browse grid instead of the random feed.
 export async function getFeedItemForChallenge(challengeId: string): Promise<FeedItem | null> {
   const user = await getCurrentUser();
+  if (user.isBanned) return null;
 
   const rows = await prisma.$queryRaw<{ itemId: string }[]>`
     SELECT ci."id" as "itemId"
@@ -174,7 +176,7 @@ export async function submitAnswer(input: {
   | { ok: true; creditsEarned: number; itemResponseCount: number; targetResponsesPerItem: number }
   | { ok: false; error: string }
 > {
-  const user = await getCurrentUser();
+  const user = await getActiveUser();
 
   const item = await prisma.challengeItem.findUnique({
     where: { id: input.itemId },
@@ -284,7 +286,7 @@ export async function createChallenge(
 ): Promise<
   { ok: true; challengeId: string } | { ok: false; error: string; needsAccount?: true }
 > {
-  const user = await getCurrentUser();
+  const user = await getActiveUser();
 
   // Doing challenges never requires an account — posting one does, so
   // there's a real identity behind exported/creator-facing data. Admins
@@ -516,7 +518,7 @@ export async function updateMyChallenge(
   challengeId: string,
   input: UpdateChallengeInput
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const user = await getCurrentUser();
+  const user = await getActiveUser();
   const challenge = await prisma.challenge.findUnique({
     where: { id: challengeId },
     include: { _count: { select: { submissions: true } } },
@@ -596,7 +598,7 @@ export async function setMyChallengeStatus(
   challengeId: string,
   status: "ACTIVE" | "REMOVED"
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const user = await getCurrentUser();
+  const user = await getActiveUser();
   const challenge = await prisma.challenge.findUnique({ where: { id: challengeId } });
   if (!challenge || challenge.creatorId !== user.id) {
     return { ok: false, error: "Can't change this challenge." };
@@ -612,7 +614,7 @@ export async function flagContent(input: {
   targetId: string;
   reason: string;
 }) {
-  const user = await getCurrentUser();
+  const user = await getActiveUser();
   const data: Prisma.FlagCreateInput = {
     targetType: input.targetType,
     reason: input.reason.trim() || "unspecified",

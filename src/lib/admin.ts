@@ -41,6 +41,9 @@ export async function attemptAdminLogin(password: string): Promise<boolean> {
   const ok = a.length === b.length && timingSafeEqual(a, b);
   if (!ok) return false;
 
+  // A banned device can't talk its way back in as an admin.
+  if ((await getCurrentUser()).isBanned) return false;
+
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, expectedCookieValue(), {
     httpOnly: true,

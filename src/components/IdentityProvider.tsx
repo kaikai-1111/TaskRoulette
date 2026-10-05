@@ -9,6 +9,8 @@ interface Identity {
   avatarUrl: string | null;
   hasAccount: boolean;
   hasName: boolean; // first + last name on file (admin-only data; see NameGate)
+  isBanned: boolean;
+  banReason: string | null;
 }
 
 interface IdentityContextValue {
@@ -32,6 +34,8 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
         avatarUrl: s.avatarUrl,
         hasAccount: s.hasAccount,
         hasName: s.hasName,
+        isBanned: s.isBanned,
+        banReason: s.banReason,
       })
     );
   }, []);

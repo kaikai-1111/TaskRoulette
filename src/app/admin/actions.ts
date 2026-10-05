@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { adminLogout, attemptAdminLogin, isAdmin } from "@/lib/admin";
+import { getCurrentUser } from "@/lib/identity";
 
 async function requireAdmin() {
   if (!(await isAdmin())) redirect("/admin/login");
@@ -77,18 +78,24 @@ export async function getUsers(query?: string) {
   const q = query?.trim();
   return prisma.user.findMany({
     where: {
-      username: { not: null },
-      ...(q
-        ? {
-            OR: [
-              { username: { contains: q, mode: "insensitive" } },
-              { email: { contains: q, mode: "insensitive" } },
-              { firstName: { contains: q, mode: "insensitive" } },
-              { lastName: { contains: q, mode: "insensitive" } },
-              { displayName: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
+      // Accounts, plus anonymous visitors who've been banned (so a ban
+      // placed from a moderation flag stays findable and reversible).
+      AND: [
+        { OR: [{ username: { not: null } }, { isBanned: true }] },
+        ...(q
+          ? [
+              {
+                OR: [
+                  { username: { contains: q, mode: "insensitive" as const } },
+                  { email: { contains: q, mode: "insensitive" as const } },
+                  { firstName: { contains: q, mode: "insensitive" as const } },
+                  { lastName: { contains: q, mode: "insensitive" as const } },
+                  { displayName: { contains: q, mode: "insensitive" as const } },
+                ],
+              },
+            ]
+          : []),
+      ],
     },
     select: {
       id: true,
@@ -98,6 +105,7 @@ export async function getUsers(query?: string) {
       lastName: true,
       email: true,
       isAdmin: true,
+      isBanned: true,
       createdAt: true,
     },
     orderBy: { createdAt: "desc" },
@@ -118,6 +126,9 @@ export async function getUserDetail(userId: string) {
       email: true,
       avatarUrl: true,
       isAdmin: true,
+      isBanned: true,
+      bannedAt: true,
+      banReason: true,
       credits: true,
       createdAt: true,
       ageAttested: true,
@@ -136,6 +147,51 @@ export async function getUserDetail(userId: string) {
   // itself never goes to the page.
   const { passwordHash, googleId, ...rest } = user;
   return { ...rest, hasPassword: !!passwordHash, hasGoogle: !!googleId };
+}
+
+export async function banUserAction(
+  userId: string,
+  _prevState: { error: string } | null,
+  formData: FormData
+): Promise<{ error: string } | null> {
+  await requireAdmin();
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 500);
+  const removeChallenges = formData.get("removeChallenges") === "on";
+
+  const target = await prisma.user.findUnique({ where: { id: userId } });
+  if (!target) return { error: "No such user." };
+  if (target.isAdmin) return { error: "Revoke their admin access first (Admins page)." };
+  if (target.id === (await getCurrentUser()).id) return { error: "You can't ban yourself." };
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: { isBanned: true, bannedAt: new Date(), banReason: reason || null },
+    }),
+    ...(removeChallenges
+      ? [
+          prisma.challenge.updateMany({
+            where: { creatorId: userId, status: { in: ["ACTIVE", "FLAGGED"] } },
+            data: { status: "REMOVED" },
+          }),
+        ]
+      : []),
+  ]);
+  revalidatePath(`/admin/users/${userId}`);
+  revalidatePath("/admin/users");
+  return null;
+}
+
+// Lifts the ban only — challenges taken down at ban time stay removed
+// (reactivate them from All challenges if wanted).
+export async function unbanUserAction(userId: string) {
+  await requireAdmin();
+  await prisma.user.update({
+    where: { id: userId },
+    data: { isBanned: false, bannedAt: null, banReason: null },
+  });
+  revalidatePath(`/admin/users/${userId}`);
+  revalidatePath("/admin/users");
 }
 
 export async function getAdmins() {
