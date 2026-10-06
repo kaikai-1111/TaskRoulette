@@ -59,20 +59,13 @@ export function aggregateSurvey(config: SurveyConfig, rawAnswers: string[]): Que
   });
 }
 
-// Respondents control these strings, and the creator will open the file in a
-// spreadsheet — a leading = + - @ (or tab/CR) would be run as a formula, so
-// neutralize it with a leading apostrophe (the standard mitigation).
-function csvCell(raw: string): string {
-  const v = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
-}
-
-// One row per respondent, one column per question. MULTI answers are joined
-// with " | ". Respondents are anonymous — no identifying column on purpose.
-export function surveyToCsv(
+// One row per respondent, one column per question (header row first). MULTI
+// answers are joined with " | ". Respondents are anonymous — no identifying
+// column on purpose. Delimited-file escaping lives in lib/export.ts.
+export function surveyTable(
   config: SurveyConfig,
   submissions: { answer: string; createdAt: Date }[]
-): string {
+): string[][] {
   const header = ["submitted_at", ...config.questions.map((q) => q.text)];
   const rows = submissions.map((s) => {
     const parsed = parseSurveyAnswer(s.answer);
@@ -85,5 +78,5 @@ export function surveyToCsv(
       }),
     ];
   });
-  return [header, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n") + "\r\n";
+  return [header, ...rows];
 }

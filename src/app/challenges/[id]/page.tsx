@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getChallengeResults } from "@/app/actions";
 import { drawingStrokes, formatAnswerSummary, photoAnswerUrl, videoAnswerUrl } from "@/lib/templates/format";
 import { aggregateSurvey, type QuestionResult } from "@/lib/templates/survey";
+import { EXPORT_FORMATS } from "@/lib/export";
 import { summarizeRatings } from "@/lib/templates/rating";
 import type { RatingConfig, SurveyConfig, TemplateType } from "@/lib/templates/types";
 
@@ -36,20 +37,23 @@ export default async function ChallengeResultsPage({
         {challenge.purpose.toLowerCase()} · {challenge.items.length} item(s)
       </p>
 
-      <a
-        href={`/api/challenges/${challenge.id}/export`}
-        className="inline-block mb-6 rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white px-5 py-2.5 text-sm font-semibold active:scale-95 transition"
-      >
-        Export JSON
-      </a>
-      {challenge.templateType === "SURVEY" && (
-        <a
-          href={`/api/challenges/${challenge.id}/export?format=csv`}
-          className="inline-block mb-6 ml-2 rounded-full border border-black/10 dark:border-white/15 px-5 py-2.5 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/10 active:scale-95 transition"
-        >
-          Export CSV
-        </a>
-      )}
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <span className="text-sm text-black/50 dark:text-white">Export:</span>
+        {EXPORT_FORMATS.map((f, i) => (
+          <a
+            key={f.id}
+            href={`/api/challenges/${challenge.id}/export?format=${f.id}`}
+            title={f.hint}
+            className={`rounded-full px-4 py-2 text-sm font-semibold active:scale-95 transition ${
+              i === 0
+                ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white"
+                : "border border-black/10 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/10"
+            }`}
+          >
+            {f.label}
+          </a>
+        ))}
+      </div>
 
       {challenge.templateType === "SURVEY" ? (
         <SurveyResults

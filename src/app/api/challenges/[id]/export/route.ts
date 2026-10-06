@@ -1,53 +1,29 @@
 import { NextResponse } from "next/server";
 import { getChallengeResults } from "@/app/actions";
-import { surveyToCsv } from "@/lib/templates/survey";
-import type { SurveyConfig } from "@/lib/templates/types";
+import { buildExport, EXPORT_FORMATS, parseExportFormat } from "@/lib/export";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const url = new URL(req.url);
+
+  const format = parseExportFormat(url.searchParams.get("format"));
+  if (!format) {
+    return NextResponse.json(
+      { error: `Unknown format. Use one of: ${EXPORT_FORMATS.map((f) => f.id).join(", ")}.` },
+      { status: 400 }
+    );
+  }
+
   const challenge = await getChallengeResults(id);
   if (!challenge) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
-  // Survey creators usually want a spreadsheet: one row per respondent.
-  if (challenge.templateType === "SURVEY" && new URL(req.url).searchParams.get("format") === "csv") {
-    const csv = surveyToCsv(
-      JSON.parse(challenge.config) as SurveyConfig,
-      challenge.items.flatMap((i) => i.submissions.map((s) => ({ answer: s.answer, createdAt: s.createdAt })))
-    );
-    return new NextResponse(csv, {
-      headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="survey-${challenge.id}.csv"`,
-      },
-    });
-  }
-
-  const payload = {
-    id: challenge.id,
-    prompt: challenge.prompt,
-    templateType: challenge.templateType,
-    category: challenge.category,
-    purpose: challenge.purpose,
-    config: JSON.parse(challenge.config),
-    status: challenge.status,
-    items: challenge.items.map((item) => ({
-      id: item.id,
-      mediaUrl: item.mediaUrl,
-      textContent: item.textContent,
-      submissions: item.submissions.map((s) => ({
-        answer: JSON.parse(s.answer),
-        timeTakenMs: s.timeTakenMs,
-        createdAt: s.createdAt,
-      })),
-    })),
-  };
-
-  return new NextResponse(JSON.stringify(payload, null, 2), {
+  const { body, filename, mime } = buildExport(challenge, format, url.origin);
+  return new NextResponse(body, {
     headers: {
-      "Content-Type": "application/json",
-      "Content-Disposition": `attachment; filename="challenge-${challenge.id}.json"`,
+      "Content-Type": mime,
+      "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
 }
