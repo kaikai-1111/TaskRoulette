@@ -25,6 +25,11 @@ export const ECONOMY = {
   MAX_SURVEY_OPTIONS: 12,
   MAX_SURVEY_TEXT_ANSWER_CHARS: 2000,
 
+  // "Rate it" bounds: min/max are whole numbers in 0..MAX_RATING_VALUE with max above min.
+  MAX_RATING_VALUE: 100,
+  MAX_RATING_COMMENT_CHARS: 500,
+  MAX_RATING_LABEL_CHARS: 30,
+
   // Video/webcam recording (deferred in the original spec, now scoped in):
   // hard-capped short so hosting cost and privacy exposure stay bounded.
   MIN_VIDEO_SECONDS: 2,

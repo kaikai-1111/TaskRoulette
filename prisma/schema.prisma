@@ -20,6 +20,7 @@ enum TemplateType {
   VIDEO_RECORDING
   PHOTO_CAPTURE
   SURVEY
+  RATING
 }
 
 enum ChallengeCategory {

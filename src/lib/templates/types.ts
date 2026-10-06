@@ -11,7 +11,8 @@ export type TemplateType =
   | "FREEFORM_DRAWING"
   | "VIDEO_RECORDING"
   | "PHOTO_CAPTURE"
-  | "SURVEY";
+  | "SURVEY"
+  | "RATING";
 
 export const TEMPLATE_TYPES: { value: TemplateType; label: string; blurb: string }[] = [
   {
@@ -48,6 +49,11 @@ export const TEMPLATE_TYPES: { value: TemplateType; label: string; blurb: string
     value: "SURVEY",
     label: "Survey",
     blurb: "Doers answer a set of questions you write — multiple choice, ratings, or free text. For opinions and data of any kind.",
+  },
+  {
+    value: "RATING",
+    label: "Rate it",
+    blurb: "Doers rate each image or text on a scale you set, like 1–10, with optional labels and a comment.",
   },
 ];
 
@@ -108,6 +114,19 @@ export interface PhotoCaptureAnswer {
   mediaUrl: string; // uploaded photo, served from /uploads/images/...
 }
 
+export interface RatingConfig {
+  min: number; // lowest rating, e.g. 1
+  max: number; // highest rating, e.g. 10
+  lowLabel?: string; // caption for the low end, e.g. "Terrible"
+  highLabel?: string; // caption for the high end, e.g. "Amazing"
+  allowComment: boolean; // show an optional short comment box
+}
+
+export interface RatingAnswer {
+  value: number; // integer within [min, max]
+  comment?: string;
+}
+
 export type SurveyQuestionKind = "SINGLE" | "MULTI" | "TEXT" | "SCALE";
 
 export interface SurveyQuestion {
@@ -143,7 +162,9 @@ export type ChallengeConfigFor<T extends TemplateType> = T extends "BOUNDING_BOX
           ? PhotoCaptureConfig
           : T extends "SURVEY"
             ? SurveyConfig
-            : VideoRecordingConfig;
+            : T extends "RATING"
+              ? RatingConfig
+              : VideoRecordingConfig;
 
 export type ChallengeAnswerFor<T extends TemplateType> = T extends "BOUNDING_BOX"
   ? BoundingBoxAnswer
@@ -157,7 +178,9 @@ export type ChallengeAnswerFor<T extends TemplateType> = T extends "BOUNDING_BOX
           ? PhotoCaptureAnswer
           : T extends "SURVEY"
             ? SurveyAnswer
-            : VideoRecordingAnswer;
+            : T extends "RATING"
+              ? RatingAnswer
+              : VideoRecordingAnswer;
 
 export type AnyChallengeConfig =
   | BoundingBoxConfig
@@ -166,7 +189,8 @@ export type AnyChallengeConfig =
   | FreeformDrawingConfig
   | VideoRecordingConfig
   | PhotoCaptureConfig
-  | SurveyConfig;
+  | SurveyConfig
+  | RatingConfig;
 
 export type AnyChallengeAnswer =
   | BoundingBoxAnswer
@@ -175,7 +199,8 @@ export type AnyChallengeAnswer =
   | FreeformDrawingAnswer
   | VideoRecordingAnswer
   | PhotoCaptureAnswer
-  | SurveyAnswer;
+  | SurveyAnswer
+  | RatingAnswer;
 
 // One ChallengeItem as handed to a capture component: the item's own media plus
 // the parsed (not raw JSON string) challenge-level config and prompt.

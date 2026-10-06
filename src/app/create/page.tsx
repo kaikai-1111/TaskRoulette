@@ -51,6 +51,10 @@ const ITEMS_COPY: Record<TemplateType, { label: string; placeholder: string }> =
     label: "Things to photograph, one per line",
     placeholder: "your desk right now\na plant near you",
   },
+  RATING: {
+    label: "Things to rate, one per line",
+    placeholder: "a really good pun\nthe worst pun ever",
+  },
   // Surveys have no item list — the question builder replaces it.
   SURVEY: { label: "", placeholder: "" },
 };
@@ -64,7 +68,7 @@ function defaultPurposeFor(t: TemplateType): "ANNOTATING" | "COLLECTING" {
 }
 
 function usesImageItemsFor(templateType: TemplateType, mediaMode: "image" | "text"): boolean {
-  return templateType === "BOUNDING_BOX" || templateType === "POINT" || (templateType === "LABELING" && mediaMode === "image");
+  return templateType === "BOUNDING_BOX" || templateType === "POINT" || ((templateType === "LABELING" || templateType === "RATING") && mediaMode === "image");
 }
 
 type Source = Pick<
@@ -94,7 +98,13 @@ function CreatePageInner() {
   const [prompt, setPrompt] = useState("");
   const [targetLabel, setTargetLabel] = useState(""); // BOUNDING_BOX / POINT only
   const [optionsInput, setOptionsInput] = useState(""); // LABELING only, comma-separated; blank = free text
-  const [mediaMode, setMediaMode] = useState<"image" | "text">("image"); // LABELING only
+  const [mediaMode, setMediaMode] = useState<"image" | "text">("image"); // LABELING / RATING only
+  // RATING only. Kept as strings so a half-typed number doesn't snap to 0.
+  const [ratingMin, setRatingMin] = useState("1");
+  const [ratingMax, setRatingMax] = useState("10");
+  const [ratingLowLabel, setRatingLowLabel] = useState("");
+  const [ratingHighLabel, setRatingHighLabel] = useState("");
+  const [ratingAllowComment, setRatingAllowComment] = useState(false);
   const [maxDurationSeconds, setMaxDurationSeconds] = useState<number>(ECONOMY.DEFAULT_VIDEO_SECONDS);
   const [itemsRaw, setItemsRaw] = useState("");
   const [questions, setQuestions] = useState<QuestionDraft[]>(() => [newQuestion()]); // SURVEY only
@@ -148,6 +158,12 @@ function CreatePageInner() {
         setOptionsInput(Array.isArray(options) ? options.join(", ") : "");
       } else if (src.templateType === "SURVEY") {
         setQuestions(draftsFromConfig(config));
+      } else if (src.templateType === "RATING") {
+        setRatingMin(String(typeof config.min === "number" ? config.min : 1));
+        setRatingMax(String(typeof config.max === "number" ? config.max : 10));
+        setRatingLowLabel(typeof config.lowLabel === "string" ? config.lowLabel : "");
+        setRatingHighLabel(typeof config.highLabel === "string" ? config.highLabel : "");
+        setRatingAllowComment(config.allowComment === true);
       } else if (src.templateType === "VIDEO_RECORDING") {
         setMaxDurationSeconds(
           typeof config.maxDurationSeconds === "number" ? config.maxDurationSeconds : ECONOMY.DEFAULT_VIDEO_SECONDS
@@ -157,8 +173,8 @@ function CreatePageInner() {
       const srcUsesImages =
         src.templateType === "BOUNDING_BOX" ||
         src.templateType === "POINT" ||
-        (src.templateType === "LABELING" && src.items.some((i) => i.mediaUrl));
-      if (src.templateType === "LABELING") setMediaMode(srcUsesImages ? "image" : "text");
+        ((src.templateType === "LABELING" || src.templateType === "RATING") && src.items.some((i) => i.mediaUrl));
+      if (src.templateType === "LABELING" || src.templateType === "RATING") setMediaMode(srcUsesImages ? "image" : "text");
       setItemsRaw(src.items.map((i) => (srcUsesImages ? i.mediaUrl : i.textContent) ?? "").filter(Boolean).join("\n"));
     }
 
@@ -222,6 +238,14 @@ function CreatePageInner() {
       config = {};
     } else if (templateType === "SURVEY") {
       config = draftsToConfig(questions);
+    } else if (templateType === "RATING") {
+      config = {
+        min: Number(ratingMin),
+        max: Number(ratingMax),
+        lowLabel: ratingLowLabel.trim() || undefined,
+        highLabel: ratingHighLabel.trim() || undefined,
+        allowComment: ratingAllowComment,
+      };
     } else {
       config = { maxDurationSeconds };
     }
@@ -431,6 +455,8 @@ function CreatePageInner() {
                       ? "e.g. Show us what's on your desk"
                       : templateType === "SURVEY"
                         ? "e.g. Lunch habits survey"
+                        : templateType === "RATING"
+                          ? "e.g. Rate this drawing out of 10"
                         : "e.g. Is this a good pun?"
             }
             className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 disabled:opacity-50"
@@ -502,7 +528,71 @@ function CreatePageInner() {
           </div>
         )}
 
-        {templateType === "LABELING" && (
+        {templateType === "RATING" && (
+          <fieldset disabled={fieldsLocked} className="flex flex-col gap-3 disabled:opacity-50">
+            <legend className="mb-1.5 text-sm font-medium">Rating scale</legend>
+            <div className="flex gap-3">
+              <label className="flex flex-1 flex-col gap-1.5">
+                <span className="text-xs text-black/60 dark:text-white">Lowest rating</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={ECONOMY.MAX_RATING_VALUE}
+                  value={ratingMin}
+                  onChange={(e) => setRatingMin(e.target.value)}
+                  className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+                />
+              </label>
+              <label className="flex flex-1 flex-col gap-1.5">
+                <span className="text-xs text-black/60 dark:text-white">Highest rating</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={ECONOMY.MAX_RATING_VALUE}
+                  value={ratingMax}
+                  onChange={(e) => setRatingMax(e.target.value)}
+                  className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+                />
+              </label>
+            </div>
+            <div className="flex gap-3">
+              <label className="flex flex-1 flex-col gap-1.5">
+                <span className="text-xs text-black/60 dark:text-white">Low-end label (optional)</span>
+                <input
+                  value={ratingLowLabel}
+                  maxLength={ECONOMY.MAX_RATING_LABEL_CHARS}
+                  onChange={(e) => setRatingLowLabel(e.target.value)}
+                  placeholder="Terrible"
+                  className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+                />
+              </label>
+              <label className="flex flex-1 flex-col gap-1.5">
+                <span className="text-xs text-black/60 dark:text-white">High-end label (optional)</span>
+                <input
+                  value={ratingHighLabel}
+                  maxLength={ECONOMY.MAX_RATING_LABEL_CHARS}
+                  onChange={(e) => setRatingHighLabel(e.target.value)}
+                  placeholder="Amazing"
+                  className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+                />
+              </label>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={ratingAllowComment}
+                onChange={(e) => setRatingAllowComment(e.target.checked)}
+              />
+              Let raters add a short comment
+            </label>
+            <p className="text-xs text-black/40 dark:text-white">
+              Raters pick a whole number from {ratingMin || "?"} to {ratingMax || "?"}
+              {Number(ratingMax) - Number(ratingMin) + 1 > 11 ? " using a slider." : "."}
+            </p>
+          </fieldset>
+        )}
+
+        {(templateType === "LABELING" || templateType === "RATING") && (
           <fieldset disabled={fieldsLocked} className="flex flex-col gap-1.5 disabled:opacity-50">
             <label className="text-sm font-medium">Items are</label>
             <div className="flex gap-2 text-sm">

@@ -8,6 +8,8 @@ import type {
   LabelingAnswer,
   LabelingConfig,
   PhotoCaptureAnswer,
+  RatingAnswer,
+  RatingConfig,
   SurveyAnswer,
   SurveyConfig,
   SurveyQuestion,
@@ -27,6 +29,34 @@ function requireTargetLabel(config: unknown, kind: string): { targetLabel: strin
     throw new ValidationError(`${kind} challenges need a target label (what to find).`);
   }
   return { targetLabel: c.targetLabel.trim() };
+}
+
+function validateRatingConfig(config: unknown): RatingConfig {
+  const c = config as Partial<RatingConfig>;
+  const min = Number(c.min);
+  const max = Number(c.max);
+  if (!Number.isInteger(min) || !Number.isInteger(max)) {
+    throw new ValidationError("Rating minimum and maximum must be whole numbers.");
+  }
+  if (min < 0 || max > ECONOMY.MAX_RATING_VALUE) {
+    throw new ValidationError(`Ratings can go from 0 up to ${ECONOMY.MAX_RATING_VALUE}.`);
+  }
+  if (max <= min) throw new ValidationError("The rating maximum must be higher than the minimum.");
+  const label = (v: unknown, which: string) => {
+    if (typeof v !== "string" || !v.trim()) return undefined;
+    const t = v.trim();
+    if (t.length > ECONOMY.MAX_RATING_LABEL_CHARS) {
+      throw new ValidationError(`The ${which} label can be at most ${ECONOMY.MAX_RATING_LABEL_CHARS} characters.`);
+    }
+    return t;
+  };
+  return {
+    min,
+    max,
+    lowLabel: label(c.lowLabel, "low-end"),
+    highLabel: label(c.highLabel, "high-end"),
+    allowComment: c.allowComment === true,
+  };
 }
 
 const SURVEY_KINDS: SurveyQuestionKind[] = ["SINGLE", "MULTI", "TEXT", "SCALE"];
@@ -88,6 +118,7 @@ export function validateConfig(templateType: TemplateType, config: unknown): Any
   if (templateType === "FREEFORM_DRAWING") return {};
   if (templateType === "PHOTO_CAPTURE") return {};
   if (templateType === "SURVEY") return validateSurveyConfig(config);
+  if (templateType === "RATING") return validateRatingConfig(config);
 
   if (templateType === "VIDEO_RECORDING") {
     const c = config as Partial<VideoRecordingConfig>;
@@ -170,6 +201,24 @@ export function validateAnswer(
       throw new ValidationError("Draw something before submitting.");
     }
     return { strokes: a.strokes as [number, number][][] };
+  }
+
+  if (templateType === "RATING") {
+    const rating = config as RatingConfig;
+    const a = answer as Partial<RatingAnswer>;
+    if (
+      typeof a.value !== "number" ||
+      !Number.isInteger(a.value) ||
+      a.value < rating.min ||
+      a.value > rating.max
+    ) {
+      throw new ValidationError(`Pick a rating from ${rating.min} to ${rating.max}.`);
+    }
+    const out: RatingAnswer = { value: a.value };
+    if (rating.allowComment && typeof a.comment === "string" && a.comment.trim()) {
+      out.comment = a.comment.trim().slice(0, ECONOMY.MAX_RATING_COMMENT_CHARS);
+    }
+    return out;
   }
 
   if (templateType === "SURVEY") {

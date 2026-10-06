@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { getChallengeResults } from "@/app/actions";
 import { drawingStrokes, formatAnswerSummary, photoAnswerUrl, videoAnswerUrl } from "@/lib/templates/format";
 import { aggregateSurvey, type QuestionResult } from "@/lib/templates/survey";
-import type { SurveyConfig, TemplateType } from "@/lib/templates/types";
+import { summarizeRatings } from "@/lib/templates/rating";
+import type { RatingConfig, SurveyConfig, TemplateType } from "@/lib/templates/types";
 
 export default async function ChallengeResultsPage({
   params,
@@ -95,6 +96,13 @@ export default async function ChallengeResultsPage({
                   );
                 })}
               </div>
+            ) : challenge.templateType === "RATING" ? (
+              <RatingResults
+                summary={summarizeRatings(
+                  JSON.parse(challenge.config) as RatingConfig,
+                  item.submissions.map((s) => s.answer)
+                )}
+              />
             ) : challenge.templateType === "PHOTO_CAPTURE" ? (
               <div className="flex flex-wrap gap-2">
                 {item.submissions.map((s) => {
@@ -125,6 +133,42 @@ export default async function ChallengeResultsPage({
           </div>
         ))}
       </div>
+      )}
+    </div>
+  );
+}
+
+function RatingResults({ summary }: { summary: ReturnType<typeof summarizeRatings> }) {
+  const max = Math.max(1, ...summary.distribution.map((d) => d.count));
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm">
+        <span className="text-2xl font-semibold tabular-nums">
+          {summary.average === null ? "—" : summary.average.toFixed(2)}
+        </span>{" "}
+        <span className="text-black/50 dark:text-white">
+          average from {summary.count} rating{summary.count === 1 ? "" : "s"}
+        </span>
+      </p>
+      <ul className="flex flex-col gap-1">
+        {summary.distribution.map((d) => (
+          <li key={d.value} className="flex items-center gap-2 text-xs">
+            <span className="w-6 text-right tabular-nums">{d.value}</span>
+            <div className="h-1.5 flex-1 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+              <div className="h-full bg-blue-500" style={{ width: `${(d.count / max) * 100}%` }} />
+            </div>
+            <span className="w-6 tabular-nums text-black/50 dark:text-white">{d.count}</span>
+          </li>
+        ))}
+      </ul>
+      {summary.comments.length > 0 && (
+        <ul className="flex flex-col gap-1.5 max-h-56 overflow-y-auto">
+          {summary.comments.map((c, i) => (
+            <li key={i} className="rounded bg-black/5 dark:bg-white/10 px-2 py-1 text-sm whitespace-pre-wrap">
+              {c}
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

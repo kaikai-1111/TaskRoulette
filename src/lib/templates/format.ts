@@ -32,6 +32,8 @@ export function formatAnswerSummary(templateType: TemplateType, raw: string): st
     }
     case "PHOTO_CAPTURE":
       return "photo";
+    case "RATING":
+      return `rated ${typeof a.value === "number" ? a.value : "?"}${a.comment ? " + comment" : ""}`;
     case "SURVEY": {
       const answered = Array.isArray(a.responses)
         ? (a.responses as { value: unknown }[]).filter((r) => r.value !== null).length
