@@ -2,10 +2,7 @@
 
 import Link from "next/link";
 import { useIdentity } from "@/components/IdentityProvider";
-
-function initial(name: string | null): string {
-  return (name ?? "?").trim().charAt(0).toUpperCase() || "?";
-}
+import { initialOf } from "@/lib/display-name";
 
 export default function AccountBadge() {
   const { identity } = useIdentity();
@@ -22,7 +19,7 @@ export default function AccountBadge() {
         />
       ) : (
         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 dark:bg-orange-400 text-white text-xs font-semibold">
-          {initial(name)}
+          {initialOf(name)}
         </span>
       )}
       {name && (

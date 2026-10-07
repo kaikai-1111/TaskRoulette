@@ -8,6 +8,7 @@ import { getActiveUser, getCurrentUser, ANON_COOKIE_NAME } from "@/lib/identity"
 import { isAdmin } from "@/lib/admin";
 import { hashPassword, verifyPassword, MIN_PASSWORD_LENGTH } from "@/lib/password";
 import { isValidUsername, normalizeUsername, USERNAME_HINT } from "@/lib/username";
+import { cleanDisplayName, cleanText } from "@/lib/display-name";
 
 export async function getAccountStatus() {
   const user = await getCurrentUser();
@@ -34,7 +35,7 @@ export async function getAccountStatus() {
 }
 
 function cleanName(raw: string): string {
-  return raw.trim().replace(/\s+/g, " ").slice(0, 50);
+  return cleanText(raw, 50);
 }
 
 // Existing accounts created before first/last name was collected get
@@ -125,7 +126,7 @@ export async function createAccount(input: {
     return { ok: false, error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` };
   }
 
-  const displayName = input.displayName.trim().slice(0, 40) || username;
+  const displayName = cleanDisplayName(input.displayName) || username;
 
   const user = await getActiveUser();
   const passwordHash = await hashPassword(input.password);
@@ -216,7 +217,7 @@ export async function updateProfile(input: {
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const user = await getActiveUser();
   if (!user.email || !user.username) return { ok: false, error: "Create an account first." };
-  const displayName = input.displayName.trim().slice(0, 40);
+  const displayName = cleanDisplayName(input.displayName);
   const firstName = cleanName(input.firstName);
   const lastName = cleanName(input.lastName);
   if (!displayName) return { ok: false, error: "Display name can't be empty." };
@@ -329,7 +330,7 @@ export async function signInWithGoogle(
           where: { id: current.id },
           // Google's picture URL as a starting avatar — the account page
           // lets them replace it with their own upload any time.
-          data: { email, username, displayName: name || username, googleId, avatarUrl: picture },
+          data: { email, username, displayName: cleanDisplayName(name ?? "") || username, googleId, avatarUrl: picture },
         });
         break;
       } catch (err) {

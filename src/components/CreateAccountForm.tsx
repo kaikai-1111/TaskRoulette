@@ -87,6 +87,9 @@ export default function CreateAccountForm({ onCreated }: { onCreated?: () => voi
             placeholder="Defaults to your username"
             className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
           />
+          <span className="text-xs text-black/40 dark:text-white">
+            Any characters, up to 40 — it&apos;s what other people see.
+          </span>
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium">Email</span>

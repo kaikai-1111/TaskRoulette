@@ -14,6 +14,7 @@ import {
   changeEmail,
 } from "@/app/account/actions";
 import CreateAccountForm from "@/components/CreateAccountForm";
+import { cleanDisplayName, cleanText, initialOf } from "@/lib/display-name";
 import { useIdentity } from "@/components/IdentityProvider";
 import { useCredits } from "@/components/CreditsProvider";
 
@@ -129,7 +130,7 @@ export default function AccountPage() {
       return;
     }
     setStatus((s) =>
-      s ? { ...s, displayName: nameInput.trim(), firstName: firstInput.trim(), lastName: lastInput.trim() } : s
+      s ? { ...s, displayName: cleanDisplayName(nameInput), firstName: cleanText(firstInput, 50), lastName: cleanText(lastInput, 50) } : s
     );
     setEditingName(false);
     refreshIdentity();
@@ -196,6 +197,8 @@ export default function AccountPage() {
               getAccountStatus().then((s) => {
                 setStatus(s);
                 setNameInput(s.displayName ?? "");
+                setFirstInput(s.firstName ?? "");
+                setLastInput(s.lastName ?? "");
               });
               refreshIdentity();
             }}
@@ -216,7 +219,7 @@ export default function AccountPage() {
                 <img src={status.avatarUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <span className="flex h-full w-full items-center justify-center bg-blue-600 dark:bg-orange-400 text-white text-xl font-semibold">
-                  {(status.displayName ?? status.username ?? "?").trim().charAt(0).toUpperCase()}
+                  {initialOf(status.displayName ?? status.username)}
                 </span>
               )}
               <span className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 text-white text-[10px] font-medium opacity-0 hover:opacity-100 transition">
@@ -256,6 +259,9 @@ export default function AccountPage() {
                     onChange={(e) => setNameInput(e.target.value)}
                     className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
                   />
+                  <span className="text-xs text-black/40 dark:text-white">
+                    Any characters, up to 40. Your username stays lowercase letters, numbers and underscores.
+                  </span>
                 </label>
                 <div className="flex gap-3">
                   <label className="flex flex-1 flex-col gap-1.5">
