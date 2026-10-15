@@ -20,6 +20,12 @@ export default function NavHeader() {
         <Link href="/browse" className="hover:text-blue-600 dark:hover:text-blue-400">
           Browse
         </Link>
+        <Link href="/models" className="hover:text-blue-600 dark:hover:text-blue-400">
+          Models
+        </Link>
+        <Link href="/rewards" className="hover:text-blue-600 dark:hover:text-blue-400">
+          Rewards
+        </Link>
         <Link href="/create" className="hover:text-blue-600 dark:hover:text-blue-400">
           Post
         </Link>

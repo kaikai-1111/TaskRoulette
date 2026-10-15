@@ -173,7 +173,13 @@ export async function submitAnswer(input: {
   answer: unknown;
   timeTakenMs: number;
 }): Promise<
-  | { ok: true; creditsEarned: number; itemResponseCount: number; targetResponsesPerItem: number }
+  | {
+      ok: true;
+      creditsEarned: number;
+      tokensEarned: number;
+      itemResponseCount: number;
+      targetResponsesPerItem: number;
+    }
   | { ok: false; error: string }
 > {
   const user = await getActiveUser();
@@ -234,7 +240,13 @@ export async function submitAnswer(input: {
 
       await tx.user.update({
         where: { id: user.id },
-        data: { credits: { increment: ECONOMY.CREDITS_PER_SUBMISSION } },
+        data: {
+          credits: { increment: ECONOMY.CREDITS_PER_SUBMISSION },
+          tokens: { increment: ECONOMY.TOKENS_PER_SUBMISSION },
+        },
+      });
+      await tx.tokenTransaction.create({
+        data: { userId: user.id, amount: ECONOMY.TOKENS_PER_SUBMISSION, reason: "EARN_SUBMISSION" },
       });
       await tx.creditTransaction.create({
         data: {
@@ -263,6 +275,7 @@ export async function submitAnswer(input: {
   return {
     ok: true,
     creditsEarned: ECONOMY.CREDITS_PER_SUBMISSION,
+    tokensEarned: ECONOMY.TOKENS_PER_SUBMISSION,
     itemResponseCount,
     targetResponsesPerItem: item.challenge.targetResponsesPerItem,
   };
@@ -327,8 +340,10 @@ export async function createChallenge(
     throw err;
   }
 
-  // Admins post for free: no balance check, no deduction, no ledger row.
-  const totalCost = (await isAdmin()) ? 0 : ECONOMY.CHALLENGE_POST_COST;
+  // Admins — and anyone with an active infinite-credits power-up — post for
+  // free: no balance check, no deduction, no ledger row.
+  const freeNow = user.freeCreditsUntil !== null && user.freeCreditsUntil.getTime() > Date.now();
+  const totalCost = freeNow || (await isAdmin()) ? 0 : ECONOMY.CHALLENGE_POST_COST;
 
   try {
     const challenge = await prisma.$transaction(async (tx) => {
@@ -389,9 +404,24 @@ export async function createChallenge(
 
 // ---- Misc ----
 
-export async function getMyCredits(): Promise<number> {
+export interface Balances {
+  credits: number;
+  tokens: number;
+  // Epoch ms while an infinite-spending power-up is running, else null.
+  freeCreditsUntil: number | null;
+  freeTokensUntil: number | null;
+}
+
+export async function getMyBalances(): Promise<Balances> {
   const user = await getCurrentUser();
-  return user.credits;
+  const now = Date.now();
+  const active = (d: Date | null) => (d && d.getTime() > now ? d.getTime() : null);
+  return {
+    credits: user.credits,
+    tokens: user.tokens,
+    freeCreditsUntil: active(user.freeCreditsUntil),
+    freeTokensUntil: active(user.freeTokensUntil),
+  };
 }
 
 export async function getMyChallenges() {

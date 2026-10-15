@@ -49,3 +49,6 @@ next-env.d.ts
 
 # user-uploaded recordings (local-disk storage for v1)
 /public/uploads
+
+# locally stored model files (dev fallback when no Blob token is set)
+/.data

@@ -57,6 +57,36 @@ enum CreditReason {
   SPEND_CHALLENGE_POST
   REFUND_UNUSED_ITEMS
   ADMIN_ADJUST
+  DAILY_AWARD
+  SHOP_PURCHASE
+}
+
+// Tokens are the second currency: earned by doing challenges and from daily
+// awards, spent on paid models and power-ups, and paid to a model's poster
+// when someone buys it.
+enum TokenReason {
+  EARN_SUBMISSION
+  DAILY_AWARD
+  MODEL_PURCHASE // spent by the buyer
+  MODEL_SALE // earned by the poster
+  SHOP_PURCHASE
+  ADMIN_ADJUST
+}
+
+enum ModelStatus {
+  ACTIVE
+  REMOVED
+}
+
+// While active, the matching balance isn't charged (see lib/powerups.ts).
+enum PowerUpKind {
+  INFINITE_CREDITS
+  INFINITE_TOKENS
+}
+
+enum PowerUpSource {
+  DAILY
+  SHOP
 }
 
 enum FlagTargetType {
@@ -118,13 +148,27 @@ model User {
   bannedAt  DateTime?
   banReason String?
 
+  // Second currency, plus the timers behind power-ups and daily awards.
+  // free*Until: while in the future, spending that currency is free.
+  // dailyClaimCount drives the tokens/credits alternation; lastDailyClaimAt
+  // gates one claim per UTC day.
+  tokens           Int       @default(0)
+  freeCreditsUntil DateTime?
+  freeTokensUntil  DateTime?
+  lastDailyClaimAt DateTime?
+  dailyClaimCount  Int       @default(0)
+
   // Self-attested age/ToS gate, shown once before first use of the app.
   ageAttested Boolean @default(false)
 
-  challenges  Challenge[]
-  submissions Submission[]
-  transactions CreditTransaction[]
-  flags       Flag[]
+  challenges        Challenge[]
+  submissions       Submission[]
+  transactions      CreditTransaction[]
+  tokenTransactions TokenTransaction[]
+  flags             Flag[]
+  models            MlModel[]
+  modelPurchases    ModelPurchase[]
+  powerUps          PowerUp[]
 }
 
 // A posted challenge: a template type + creator-supplied config, applied over
@@ -153,7 +197,7 @@ model Challenge {
 // One presentable unit within a challenge (one image to box, one snippet to label, ...).
 // Simple single-prompt challenges (no media set) still get exactly one auto-created item.
 model ChallengeItem {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   challengeId   String
   challenge     Challenge @relation(fields: [challengeId], references: [id])
   order         Int       @default(0)
@@ -168,17 +212,17 @@ model ChallengeItem {
 
 // One doer's answer to one item.
 model Submission {
-  id            String           @id @default(cuid())
-  challengeId   String
-  challenge     Challenge        @relation(fields: [challengeId], references: [id])
-  itemId        String
-  item          ChallengeItem    @relation(fields: [itemId], references: [id])
-  submitterId   String
-  submitter     User             @relation(fields: [submitterId], references: [id])
-  answer        String // JSON blob, shape depends on Challenge.templateType (see lib/templates)
-  status        SubmissionStatus @default(APPROVED)
-  timeTakenMs   Int
-  createdAt     DateTime         @default(now())
+  id          String           @id @default(cuid())
+  challengeId String
+  challenge   Challenge        @relation(fields: [challengeId], references: [id])
+  itemId      String
+  item        ChallengeItem    @relation(fields: [itemId], references: [id])
+  submitterId String
+  submitter   User             @relation(fields: [submitterId], references: [id])
+  answer      String // JSON blob, shape depends on Challenge.templateType (see lib/templates)
+  status      SubmissionStatus @default(APPROVED)
+  timeTakenMs Int
+  createdAt   DateTime         @default(now())
 
   flags Flag[]
 
@@ -215,4 +259,69 @@ model Flag {
   createdAt    DateTime       @default(now())
 
   @@index([resolved])
+}
+
+// Append-only ledger for tokens (mirrors CreditTransaction).
+model TokenTransaction {
+  id             String      @id @default(cuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id])
+  amount         Int // positive = earn, negative = spend
+  reason         TokenReason
+  relatedModelId String?
+  createdAt      DateTime    @default(now())
+
+  @@index([userId, createdAt])
+}
+
+// A hosted model file. fileUrl is never sent to browsers — downloads go
+// through /api/models/[id]/download, which checks the buyer's entitlement.
+// Download-only for now; a future "run it here" feature would hang its
+// runtime fields off this row.
+model MlModel {
+  id            String      @id @default(cuid())
+  creatorId     String
+  creator       User        @relation(fields: [creatorId], references: [id])
+  name          String
+  description   String
+  format        String // lower-case file extension, e.g. "pth"
+  fileName      String // original name, used for the download
+  fileUrl       String // "local:<key>" (dev disk) or a Vercel Blob URL
+  fileSize      BigInt // bytes, measured server-side
+  priceTokens   Int         @default(0) // 0 = free
+  downloadCount Int         @default(0)
+  status        ModelStatus @default(ACTIVE)
+  createdAt     DateTime    @default(now())
+
+  purchases ModelPurchase[]
+
+  @@index([status, createdAt])
+}
+
+// One-time, permanent purchase of a paid model.
+model ModelPurchase {
+  id        String   @id @default(cuid())
+  modelId   String
+  model     MlModel  @relation(fields: [modelId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  pricePaid Int // tokens the buyer actually paid (0 if a power-up covered it)
+  createdAt DateTime @default(now())
+
+  @@unique([modelId, userId])
+}
+
+// An unused-or-used power-up in a user's inventory. Activating one sets the
+// user's free*Until timer; usedAt marks it spent.
+model PowerUp {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  kind            PowerUpKind
+  durationSeconds Int
+  source          PowerUpSource
+  createdAt       DateTime      @default(now())
+  usedAt          DateTime?
+
+  @@index([userId, usedAt])
 }

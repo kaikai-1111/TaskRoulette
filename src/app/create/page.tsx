@@ -113,7 +113,8 @@ function CreatePageInner() {
   );
   const [timeLimitSeconds, setTimeLimitSeconds] = useState<number>(ECONOMY.DEFAULT_TIME_LIMIT_SECONDS);
   const [noTimeLimit, setNoTimeLimit] = useState(false);
-  const { credits, adjust } = useCredits();
+  const { credits, adjust, freeCreditsUntil } = useCredits();
+  const infiniteCredits = freeCreditsUntil !== null && freeCreditsUntil > Date.now();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -221,7 +222,7 @@ function CreatePageInner() {
 
   const totalCost = ECONOMY.CHALLENGE_POST_COST;
   // Admins post free, so their balance never blocks a post.
-  const canAfford = isAdmin || credits === null || credits >= totalCost;
+  const canAfford = isAdmin || infiniteCredits || credits === null || credits >= totalCost;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -380,6 +381,8 @@ function CreatePageInner() {
           {credits === null ? "…" : `You have ${credits} credits.`}{" "}
           {isAdmin
             ? "Posting is free for admins."
+            : infiniteCredits
+              ? "Infinite credits is active — posting is free right now."
             : `Posting a challenge costs a flat ${ECONOMY.CHALLENGE_POST_COST} credits, no matter how many items or responses you ask for.`}
         </p>
       )}
@@ -735,7 +738,7 @@ function CreatePageInner() {
           <div className="rounded-lg bg-black/5 dark:bg-white/10 px-3 py-2 text-sm flex justify-between">
             <span>Total cost</span>
             <span className={!canAfford ? "text-red-500 font-semibold" : "font-semibold"}>
-              {isAdmin ? "Free (admin)" : `${totalCost} credits`}
+              {isAdmin ? "Free (admin)" : infiniteCredits ? "Free (power-up)" : `${totalCost} credits`}
             </span>
           </div>
         )}
@@ -760,6 +763,8 @@ function CreatePageInner() {
               ? "Save changes"
               : isAdmin
                 ? "Post (free for admins)"
+                : infiniteCredits
+                  ? "Post (free right now)"
                 : `Post for ${totalCost} credits`}
         </button>
       </form>

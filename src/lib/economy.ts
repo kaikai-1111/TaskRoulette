@@ -37,6 +37,21 @@ export const ECONOMY = {
   DEFAULT_VIDEO_SECONDS: 4,
   MAX_VIDEO_UPLOAD_BYTES: 8 * 1024 * 1024,
 
+  // Tokens: the second currency. Earned alongside credits for every answer
+  // and from daily awards; spent on paid models and power-ups.
+  TOKENS_PER_SUBMISSION: 1,
+  // The daily claim alternates tokens / credits (see claimDailyAward) and
+  // sometimes also drops a bonus power-up.
+  DAILY_AWARD_TOKENS: 5,
+  DAILY_AWARD_CREDITS: 10,
+  DAILY_POWERUP_DROP_CHANCE: 0.2,
+
+  // Hosted models. One constant to change when the cap should grow.
+  MAX_MODEL_BYTES: 500 * 1024 * 1024,
+  MAX_MODEL_PRICE_TOKENS: 100_000,
+  MAX_MODEL_NAME_CHARS: 80,
+  MAX_MODEL_DESCRIPTION_CHARS: 4000,
+
   // Creator-uploaded challenge item images (bounding box / point / labeling).
   MAX_IMAGE_UPLOAD_BYTES: 10 * 1024 * 1024,
 } as const;

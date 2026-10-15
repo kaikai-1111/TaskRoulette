@@ -18,6 +18,9 @@ export function proxy(request: NextRequest) {
   return response;
 }
 
+// api/models/upload is excluded because the proxy buffers request bodies and
+// silently truncates them past 10MB, which would corrupt local model uploads.
+// It's only reached from pages that already minted the cookie.
 export const config = {
-  matcher: "/((?!_next/static|_next/image|favicon.ico).*)",
+  matcher: "/((?!_next/static|_next/image|favicon.ico|api/models/upload).*)",
 };

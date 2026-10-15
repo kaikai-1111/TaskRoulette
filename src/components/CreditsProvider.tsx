@@ -1,28 +1,45 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { getMyCredits } from "@/app/actions";
+import { getMyBalances } from "@/app/actions";
 
 interface CreditsContextValue {
   credits: number | null; // null = not loaded yet
+  tokens: number | null;
+  // Epoch ms while an infinite-spending power-up is running, else null.
+  freeCreditsUntil: number | null;
+  freeTokensUntil: number | null;
   refresh: () => void;
   adjust: (delta: number) => void;
+  adjustTokens: (delta: number) => void;
 }
 
 const CreditsContext = createContext<CreditsContextValue | null>(null);
 
-// Single source of truth for the visitor's credit balance, so the nav tally
-// and every page that earns/spends credits (Feed, Post) stay in sync without
-// each independently fetching and drifting from one another.
+// Single source of truth for the visitor's balances (credits, tokens and
+// any running power-up), so the nav tally and every page that earns/spends
+// (Feed, Post, Models, Rewards) stay in sync instead of drifting apart.
 export function CreditsProvider({ children }: { children: React.ReactNode }) {
   const [credits, setCredits] = useState<number | null>(null);
+  const [tokens, setTokens] = useState<number | null>(null);
+  const [freeCreditsUntil, setFreeCreditsUntil] = useState<number | null>(null);
+  const [freeTokensUntil, setFreeTokensUntil] = useState<number | null>(null);
 
   const refresh = useCallback(() => {
-    getMyCredits().then(setCredits);
+    getMyBalances().then((b) => {
+      setCredits(b.credits);
+      setTokens(b.tokens);
+      setFreeCreditsUntil(b.freeCreditsUntil);
+      setFreeTokensUntil(b.freeTokensUntil);
+    });
   }, []);
 
   const adjust = useCallback((delta: number) => {
     setCredits((c) => (c === null ? c : c + delta));
+  }, []);
+
+  const adjustTokens = useCallback((delta: number) => {
+    setTokens((t) => (t === null ? t : t + delta));
   }, []);
 
   useEffect(() => {
@@ -30,7 +47,11 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   return (
-    <CreditsContext.Provider value={{ credits, refresh, adjust }}>{children}</CreditsContext.Provider>
+    <CreditsContext.Provider
+      value={{ credits, tokens, freeCreditsUntil, freeTokensUntil, refresh, adjust, adjustTokens }}
+    >
+      {children}
+    </CreditsContext.Provider>
   );
 }
 

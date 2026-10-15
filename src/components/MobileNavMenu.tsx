@@ -6,6 +6,8 @@ import Link from "next/link";
 const LINKS = [
   { href: "/", label: "Feed" },
   { href: "/browse", label: "Browse" },
+  { href: "/models", label: "Models" },
+  { href: "/rewards", label: "Rewards" },
   { href: "/create", label: "Post" },
   { href: "/mine", label: "My challenges" },
   { href: "/account", label: "Account" },

@@ -18,13 +18,14 @@ function hasNoTimer(item: FeedItem): boolean {
 
 type Feedback = {
   creditsEarned: number;
+  tokensEarned: number;
   itemResponseCount: number;
   targetResponsesPerItem: number;
 };
 
 export default function Feed({ initialChallengeId }: { initialChallengeId?: string }) {
   const [item, setItem] = useState<FeedItem | null | undefined>(undefined); // undefined = loading
-  const { adjust } = useCredits();
+  const { adjust, adjustTokens } = useCredits();
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
@@ -96,11 +97,13 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
     }
     setFeedback({
       creditsEarned: result.creditsEarned,
+      tokensEarned: result.tokensEarned,
       itemResponseCount: result.itemResponseCount,
       targetResponsesPerItem: result.targetResponsesPerItem,
     });
     setStreak((s) => s + 1);
     adjust(result.creditsEarned);
+    adjustTokens(result.tokensEarned);
   }
 
   if (item === undefined) {
@@ -145,7 +148,9 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center px-6">
         <p className="text-4xl">✅</p>
-        <p className="text-xl font-semibold">+{feedback.creditsEarned} credit</p>
+        <p className="text-xl font-semibold">
+          +{feedback.creditsEarned} credit · +{feedback.tokensEarned} token
+        </p>
         <p className="text-black/50 dark:text-white">
           You&apos;re response #{feedback.itemResponseCount} of {feedback.targetResponsesPerItem} on this one ({pct}%
           full)
