@@ -12,7 +12,7 @@ export const usingBlob = () => !!process.env.BLOB_READ_WRITE_TOKEN;
 export const LOCAL_MODEL_DIR = path.join(process.cwd(), ".data", "models");
 
 // Keys are "<userId>_<uuid>.<ext>". The strict shape also blocks path traversal.
-const LOCAL_KEY = /^[A-Za-z0-9]+_[0-9a-f-]{36}\.[a-z0-9]{1,10}$/;
+const LOCAL_KEY = /^[A-Za-z0-9]+_[0-9a-f-]{36}\.[a-z0-9]{1,16}$/;
 
 export function localPathFor(key: string): string | null {
   return LOCAL_KEY.test(key) ? path.join(LOCAL_MODEL_DIR, key) : null;

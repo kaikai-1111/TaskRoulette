@@ -78,7 +78,8 @@ export async function POST(req: Request) {
   if (!req.body) return NextResponse.json({ error: "Empty file." }, { status: 400 });
 
   const key = `${user.id}_${randomUUID()}.${extensionOf(name)}`;
-  const filePath = localPathFor(key)!;
+  const filePath = localPathFor(key);
+  if (!filePath) return NextResponse.json({ error: "That file type isn't allowed." }, { status: 400 });
   await mkdir(LOCAL_MODEL_DIR, { recursive: true });
   const out = createWriteStream(filePath);
   const reader = req.body.getReader();
