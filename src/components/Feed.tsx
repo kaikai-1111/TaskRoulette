@@ -6,7 +6,7 @@ import { flagContent, getFeedItemForChallenge, getNextFeedItem, submitAnswer } f
 import type { FeedItem } from "@/lib/templates/types";
 import { CAPTURE_COMPONENTS } from "@/components/templates/registry";
 import { useCredits } from "@/components/CreditsProvider";
-import { ECONOMY } from "@/lib/economy";
+import { ECONOMY, hasResponseLimit } from "@/lib/economy";
 
 function hasNoTimer(item: FeedItem): boolean {
   return (
@@ -144,7 +144,8 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
   }
 
   if (feedback) {
-    const pct = Math.round((feedback.itemResponseCount / feedback.targetResponsesPerItem) * 100);
+    const limited = hasResponseLimit(feedback.targetResponsesPerItem);
+    const pct = limited ? Math.round((feedback.itemResponseCount / feedback.targetResponsesPerItem) * 100) : 0;
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center px-6">
         <p className="text-4xl">✅</p>
@@ -152,8 +153,9 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
           +{feedback.creditsEarned} credit · +{feedback.tokensEarned} token
         </p>
         <p className="text-black/50 dark:text-white">
-          You&apos;re response #{feedback.itemResponseCount} of {feedback.targetResponsesPerItem} on this one ({pct}%
-          full)
+          {limited
+            ? `You're response #${feedback.itemResponseCount} of ${feedback.targetResponsesPerItem} on this one (${pct}% full)`
+            : `You're response #${feedback.itemResponseCount} on this one`}
         </p>
         {streak > 1 && <p className="text-sm text-orange-500 font-medium">🔥 {streak} in a row</p>}
         <button

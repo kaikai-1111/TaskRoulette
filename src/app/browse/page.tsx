@@ -75,11 +75,15 @@ export default async function BrowsePage() {
                 <div className="p-2.5">
                   <p className="text-sm font-medium truncate">{c.prompt}</p>
                   <p className="text-[11px] text-black/40 dark:text-white truncate">by {c.creatorName}</p>
-                  <div className="mt-1.5 h-1 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
-                    <div className="h-full bg-blue-500" style={{ width: `${pct}%` }} />
-                  </div>
+                  {c.totalTarget > 0 && (
+                    <div className="mt-1.5 h-1 w-full rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                      <div className="h-full bg-blue-500" style={{ width: `${pct}%` }} />
+                    </div>
+                  )}
                   <p className="mt-1 text-[11px] text-black/40 dark:text-white">
-                    {c.responseCount} / {c.totalTarget} responses
+                    {c.totalTarget > 0
+                      ? `${c.responseCount} / ${c.totalTarget} responses`
+                      : `${c.responseCount} ${c.responseCount === 1 ? "response" : "responses"} · no limit`}
                   </p>
                 </div>
               </Link>

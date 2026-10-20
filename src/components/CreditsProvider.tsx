@@ -9,9 +9,27 @@ interface CreditsContextValue {
   // Epoch ms while an infinite-spending power-up is running, else null.
   freeCreditsUntil: number | null;
   freeTokensUntil: number | null;
+  // True only while that power-up is actually running (flips off on expiry by itself).
+  infiniteCredits: boolean;
+  infiniteTokens: boolean;
   refresh: () => void;
   adjust: (delta: number) => void;
   adjustTokens: (delta: number) => void;
+}
+
+// Whether `until` (epoch ms) is still in the future, kept current without
+// reading the clock during render: set when it changes, cleared at expiry.
+function useActiveUntil(until: number | null): boolean {
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    const ms = until === null ? 0 : until - Date.now();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActive(ms > 0);
+    if (ms <= 0) return;
+    const t = setTimeout(() => setActive(false), ms);
+    return () => clearTimeout(t);
+  }, [until]);
+  return active;
 }
 
 const CreditsContext = createContext<CreditsContextValue | null>(null);
@@ -24,6 +42,9 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
   const [tokens, setTokens] = useState<number | null>(null);
   const [freeCreditsUntil, setFreeCreditsUntil] = useState<number | null>(null);
   const [freeTokensUntil, setFreeTokensUntil] = useState<number | null>(null);
+
+  const infiniteCredits = useActiveUntil(freeCreditsUntil);
+  const infiniteTokens = useActiveUntil(freeTokensUntil);
 
   const refresh = useCallback(() => {
     getMyBalances().then((b) => {
@@ -48,7 +69,17 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <CreditsContext.Provider
-      value={{ credits, tokens, freeCreditsUntil, freeTokensUntil, refresh, adjust, adjustTokens }}
+      value={{
+        credits,
+        tokens,
+        freeCreditsUntil,
+        freeTokensUntil,
+        infiniteCredits,
+        infiniteTokens,
+        refresh,
+        adjust,
+        adjustTokens,
+      }}
     >
       {children}
     </CreditsContext.Provider>

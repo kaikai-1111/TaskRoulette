@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { responseProgress } from "@/lib/economy";
 import { isAdmin } from "@/lib/admin";
 import { getAllChallenges, setChallengeStatusAction } from "@/app/admin/actions";
 
@@ -37,7 +38,6 @@ export default async function AdminChallengesPage() {
       ) : (
         <ul className="flex flex-col gap-3">
           {challenges.map((c) => {
-            const totalTarget = c.items.length * c.targetResponsesPerItem;
             return (
               <li
                 key={c.id}
@@ -57,7 +57,7 @@ export default async function AdminChallengesPage() {
                   </div>
                   <p className="text-xs text-black/50 dark:text-white">
                     {c.templateType.toLowerCase()} · {c.category.toLowerCase()} · {c.purpose.toLowerCase()} ·{" "}
-                    {c._count.submissions} / {totalTarget} responses · {c.items.length} item(s) · by{" "}
+                    {responseProgress(c._count.submissions, c.items.length, c.targetResponsesPerItem)} · {c.items.length} item(s) · by{" "}
                     {c.creator.displayName ?? c.creator.email ?? c.creator.id.slice(0, 8)} ·{" "}
                     {new Date(c.createdAt).toLocaleDateString()}
                   </p>

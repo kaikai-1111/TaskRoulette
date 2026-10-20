@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { responseProgress } from "@/lib/economy";
 import { getMyChallenges, setMyChallengeStatus } from "@/app/actions";
 
 async function toggleChallengeStatus(challengeId: string, nextStatus: "ACTIVE" | "REMOVED") {
@@ -23,7 +24,6 @@ export default async function MyChallengesPage() {
       ) : (
         <ul className="flex flex-col gap-3">
           {challenges.map((c) => {
-            const totalTarget = c.items.length * c.targetResponsesPerItem;
             return (
               <li key={c.id} className="rounded-lg border border-black/10 dark:border-white/15">
                 <Link
@@ -45,7 +45,7 @@ export default async function MyChallengesPage() {
                     </span>
                   </div>
                   <div className="text-sm text-black/50 dark:text-white mt-1">
-                    {c._count.submissions} / {totalTarget} responses · {c.templateType.toLowerCase()} ·{" "}
+                    {responseProgress(c._count.submissions, c.items.length, c.targetResponsesPerItem)} · {c.templateType.toLowerCase()} ·{" "}
                     {c.purpose.toLowerCase()}
                   </div>
                 </Link>

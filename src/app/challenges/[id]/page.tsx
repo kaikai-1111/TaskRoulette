@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { hasResponseLimit, responseProgress } from "@/lib/economy";
 import { getChallengeResults } from "@/app/actions";
 import { drawingStrokes, formatAnswerSummary, photoAnswerUrl, videoAnswerUrl } from "@/lib/templates/format";
 import { aggregateSurvey, type QuestionResult } from "@/lib/templates/survey";
@@ -16,8 +17,7 @@ export default async function ChallengeResultsPage({
   if (!challenge) notFound();
 
   const totalSubmissions = challenge.items.reduce((sum, i) => sum + i.submissions.length, 0);
-  const totalTarget = challenge.items.length * challenge.targetResponsesPerItem;
-
+  
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
       <div className="flex items-start justify-between gap-4 mb-1">
@@ -33,7 +33,7 @@ export default async function ChallengeResultsPage({
         </span>
       </div>
       <p className="text-sm text-black/50 dark:text-white mb-6">
-        {totalSubmissions} / {totalTarget} responses · {challenge.templateType.toLowerCase()} ·{" "}
+        {responseProgress(totalSubmissions, challenge.items.length, challenge.targetResponsesPerItem)} · {challenge.templateType.toLowerCase()} ·{" "}
         {challenge.purpose.toLowerCase()} · {challenge.items.length} item(s)
       </p>
 
@@ -72,7 +72,9 @@ export default async function ChallengeResultsPage({
                 {item.mediaUrl ?? item.textContent}
               </span>
               <span className="text-xs text-black/40 dark:text-white shrink-0">
-                {item.submissions.length} / {challenge.targetResponsesPerItem}
+                {hasResponseLimit(challenge.targetResponsesPerItem)
+                  ? `${item.submissions.length} / ${challenge.targetResponsesPerItem}`
+                  : item.submissions.length}
               </span>
             </div>
             {item.mediaUrl && (

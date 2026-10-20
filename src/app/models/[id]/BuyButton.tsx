@@ -7,10 +7,9 @@ import { useCredits } from "@/components/CreditsProvider";
 
 export default function BuyButton({ modelId, price }: { modelId: string; price: number }) {
   const router = useRouter();
-  const { tokens, freeTokensUntil, adjustTokens } = useCredits();
+  const { tokens, infiniteTokens: infinite, adjustTokens } = useCredits();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const infinite = freeTokensUntil !== null && freeTokensUntil > Date.now();
 
   async function buy() {
     setBusy(true);

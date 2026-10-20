@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getActiveUser, getCurrentUser } from "@/lib/identity";
 import { isAdmin } from "@/lib/admin";
-import { ECONOMY, InsufficientCreditsError } from "@/lib/economy";
+import { ECONOMY, InsufficientCreditsError, hasResponseLimit } from "@/lib/economy";
 import { validateAnswer, validateConfig, ValidationError } from "@/lib/templates/validate";
 import type { AnyChallengeConfig, FeedItem, TemplateType } from "@/lib/templates/types";
 import { Prisma } from "@prisma/client";
@@ -24,7 +24,7 @@ export async function getNextFeedItem(): Promise<FeedItem | null> {
     JOIN "Challenge" c ON c."id" = ci."challengeId"
     WHERE c."status" = 'ACTIVE'
       AND c."creatorId" != ${user.id}
-      AND ci."responseCount" < c."targetResponsesPerItem"
+      AND (c."targetResponsesPerItem" = 0 OR ci."responseCount" < c."targetResponsesPerItem")
       AND NOT EXISTS (
         SELECT 1 FROM "Submission" s WHERE s."itemId" = ci."id" AND s."submitterId" = ${user.id}
       )
@@ -66,7 +66,7 @@ export async function getFeedItemForChallenge(challengeId: string): Promise<Feed
     WHERE c."id" = ${challengeId}
       AND c."status" = 'ACTIVE'
       AND c."creatorId" != ${user.id}
-      AND ci."responseCount" < c."targetResponsesPerItem"
+      AND (c."targetResponsesPerItem" = 0 OR ci."responseCount" < c."targetResponsesPerItem")
       AND NOT EXISTS (
         SELECT 1 FROM "Submission" s WHERE s."itemId" = ci."id" AND s."submitterId" = ${user.id}
       )
@@ -126,7 +126,7 @@ export async function getTopChallenges(): Promise<TopChallenge[]> {
     FROM "ChallengeItem" ci
     JOIN "Challenge" c ON c."id" = ci."challengeId"
     WHERE c."status" = 'ACTIVE'
-      AND ci."responseCount" < c."targetResponsesPerItem"
+      AND (c."targetResponsesPerItem" = 0 OR ci."responseCount" < c."targetResponsesPerItem")
       AND NOT EXISTS (
         SELECT 1 FROM "Submission" s WHERE s."itemId" = ci."id" AND s."submitterId" = ${user.id}
       )
@@ -159,7 +159,8 @@ export async function getTopChallenges(): Promise<TopChallenge[]> {
       thumbnailUrl: c.items[0]?.mediaUrl ?? null,
       thumbnailText: c.items[0]?.mediaUrl ? null : (c.items[0]?.textContent ?? null),
       responseCount: c._count.submissions,
-      totalTarget: c._count.items * c.targetResponsesPerItem,
+      // 0 = no limit (see ECONOMY.NO_RESPONSE_LIMIT); the UI shows the count alone.
+      totalTarget: hasResponseLimit(c.targetResponsesPerItem) ? c._count.items * c.targetResponsesPerItem : 0,
       itemCount: c._count.items,
       isMine: c.creatorId === user.id,
     }));
@@ -222,7 +223,10 @@ export async function submitAnswer(input: {
         data: { responseCount: { increment: 1 } },
       });
 
-      if (updatedItem.responseCount >= item.challenge.targetResponsesPerItem) {
+      if (
+        hasResponseLimit(item.challenge.targetResponsesPerItem) &&
+        updatedItem.responseCount >= item.challenge.targetResponsesPerItem
+      ) {
         const remainingOpenItems = await tx.challengeItem.count({
           where: {
             challengeId: item.challengeId,
@@ -313,12 +317,14 @@ export async function createChallenge(
   if (!input.prompt.trim()) return { ok: false, error: "Give the challenge a prompt." };
   if (input.items.length === 0) return { ok: false, error: "Add at least one item." };
   if (
-    input.targetResponsesPerItem < ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM ||
-    input.targetResponsesPerItem > ECONOMY.MAX_TARGET_RESPONSES_PER_ITEM
+    hasResponseLimit(input.targetResponsesPerItem) &&
+    (!Number.isInteger(input.targetResponsesPerItem) ||
+      input.targetResponsesPerItem < ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM ||
+      input.targetResponsesPerItem > ECONOMY.MAX_TARGET_RESPONSES_PER_ITEM)
   ) {
     return {
       ok: false,
-      error: `Responses per item must be between ${ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM} and ${ECONOMY.MAX_TARGET_RESPONSES_PER_ITEM}.`,
+      error: `Responses per item must be between ${ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM} and ${ECONOMY.MAX_TARGET_RESPONSES_PER_ITEM}, or left unlimited.`,
     };
   }
   if (
@@ -562,12 +568,14 @@ export async function updateMyChallenge(
   }
 
   if (
-    input.targetResponsesPerItem < ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM ||
-    input.targetResponsesPerItem > ECONOMY.MAX_TARGET_RESPONSES_PER_ITEM
+    hasResponseLimit(input.targetResponsesPerItem) &&
+    (!Number.isInteger(input.targetResponsesPerItem) ||
+      input.targetResponsesPerItem < ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM ||
+      input.targetResponsesPerItem > ECONOMY.MAX_TARGET_RESPONSES_PER_ITEM)
   ) {
     return {
       ok: false,
-      error: `Responses per item must be between ${ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM} and ${ECONOMY.MAX_TARGET_RESPONSES_PER_ITEM}.`,
+      error: `Responses per item must be between ${ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM} and ${ECONOMY.MAX_TARGET_RESPONSES_PER_ITEM}, or left unlimited.`,
     };
   }
   if (
@@ -617,6 +625,17 @@ export async function updateMyChallenge(
         })),
       };
     }
+  }
+
+  // A finished challenge whose limit was just raised (or removed) has room
+  // again, so put it back in the feed.
+  if (challenge.status === "COMPLETED") {
+    const roomLeft =
+      !hasResponseLimit(input.targetResponsesPerItem) ||
+      (await prisma.challengeItem.count({
+        where: { challengeId, responseCount: { lt: input.targetResponsesPerItem } },
+      })) > 0;
+    if (roomLeft) data.status = "ACTIVE";
   }
 
   await prisma.challenge.update({ where: { id: challengeId }, data });

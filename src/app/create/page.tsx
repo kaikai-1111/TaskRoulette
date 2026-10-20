@@ -113,8 +113,8 @@ function CreatePageInner() {
   );
   const [timeLimitSeconds, setTimeLimitSeconds] = useState<number>(ECONOMY.DEFAULT_TIME_LIMIT_SECONDS);
   const [noTimeLimit, setNoTimeLimit] = useState(false);
-  const { credits, adjust, freeCreditsUntil } = useCredits();
-  const infiniteCredits = freeCreditsUntil !== null && freeCreditsUntil > Date.now();
+  const [noResponseLimit, setNoResponseLimit] = useState(false);
+  const { credits, adjust, infiniteCredits } = useCredits();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -143,7 +143,12 @@ function CreatePageInner() {
       setPrompt(src.prompt);
       setCategory(src.category);
       setPurpose(src.purpose);
-      setTargetResponsesPerItem(src.targetResponsesPerItem);
+      if (src.targetResponsesPerItem === ECONOMY.NO_RESPONSE_LIMIT) {
+        setNoResponseLimit(true);
+      } else {
+        setNoResponseLimit(false);
+        setTargetResponsesPerItem(src.targetResponsesPerItem);
+      }
       if (src.timeLimitSeconds === ECONOMY.NO_TIME_LIMIT) {
         setNoTimeLimit(true);
       } else {
@@ -260,13 +265,14 @@ function CreatePageInner() {
           ? items.map((mediaUrl) => ({ mediaUrl }))
           : items.map((textContent) => ({ textContent }));
     const resolvedTimeLimit = noTimeLimit ? ECONOMY.NO_TIME_LIMIT : timeLimitSeconds;
+    const resolvedTarget = noResponseLimit ? ECONOMY.NO_RESPONSE_LIMIT : targetResponsesPerItem;
 
     setSubmitting(true);
 
     if (editChallengeId) {
       const result = await updateMyChallenge(editChallengeId, {
         timeLimitSeconds: resolvedTimeLimit,
-        targetResponsesPerItem,
+        targetResponsesPerItem: resolvedTarget,
         ...(fieldsLocked ? {} : { prompt, category, purpose, config, items: challengeItems }),
       });
       setSubmitting(false);
@@ -285,7 +291,7 @@ function CreatePageInner() {
       prompt,
       config,
       timeLimitSeconds: resolvedTimeLimit,
-      targetResponsesPerItem,
+      targetResponsesPerItem: resolvedTarget,
       items: challengeItems,
     });
     setSubmitting(false);
@@ -668,9 +674,18 @@ function CreatePageInner() {
               min={ECONOMY.MIN_TARGET_RESPONSES_PER_ITEM}
               max={ECONOMY.MAX_TARGET_RESPONSES_PER_ITEM}
               value={targetResponsesPerItem}
+              disabled={noResponseLimit}
               onChange={(e) => setTargetResponsesPerItem(Number(e.target.value))}
-              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
+              className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2 disabled:opacity-40"
             />
+            <label className="flex items-center gap-1.5 text-xs text-black/50 dark:text-white">
+              <input
+                type="checkbox"
+                checked={noResponseLimit}
+                onChange={(e) => setNoResponseLimit(e.target.checked)}
+              />
+              No limit — keep collecting until I take it down
+            </label>
           </label>
           <label className="flex flex-1 flex-col gap-1.5">
             <span className="text-sm font-medium">Time limit (seconds)</span>

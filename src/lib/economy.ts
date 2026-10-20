@@ -14,6 +14,9 @@ export const ECONOMY = {
   NO_TIME_LIMIT: 0,
   MIN_TIME_LIMIT_SECONDS: 5,
   MAX_TIME_LIMIT_SECONDS: 3600,
+  // Same trick for responses: a stored target of 0 means "keep collecting
+  // until the creator takes it down". A real target is never zero.
+  NO_RESPONSE_LIMIT: 0,
   MIN_TARGET_RESPONSES_PER_ITEM: 1,
   // Raised well past a typical "small dataset" cap on purpose — the flat
   // posting cost means a creator should be able to ask for mass responses
@@ -55,6 +58,18 @@ export const ECONOMY = {
   // Creator-uploaded challenge item images (bounding box / point / labeling).
   MAX_IMAGE_UPLOAD_BYTES: 10 * 1024 * 1024,
 } as const;
+
+export function hasResponseLimit(targetResponsesPerItem: number): boolean {
+  return targetResponsesPerItem !== ECONOMY.NO_RESPONSE_LIMIT;
+}
+
+// "12 / 50 responses" for a capped challenge, "12 responses · no limit" otherwise.
+export function responseProgress(responses: number, itemCount: number, perItem: number): string {
+  const noun = responses === 1 ? "response" : "responses";
+  return hasResponseLimit(perItem)
+    ? `${responses} / ${itemCount * perItem} ${noun}`
+    : `${responses} ${noun} · no limit`;
+}
 
 export class InsufficientCreditsError extends Error {
   constructor(public needed: number, public have: number) {
