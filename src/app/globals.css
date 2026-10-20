@@ -47,7 +47,9 @@ body {
 }
 
 /* Chalk-doodle wallpaper (components/Doodles.tsx). Fixed behind everything and
-   never interactive; quieter on phones, where doodles can't stay in the margins. */
+   never interactive; quieter on phones, where doodles can't stay in the margins.
+   Each doodle drifts along a path set by its CSS variables, then the component
+   swaps in a new one. */
 .doodle-layer {
   position: fixed;
   inset: 0;
@@ -55,10 +57,38 @@ body {
   overflow: hidden;
   pointer-events: none;
   opacity: 0.92;
+  animation: doodle-fade-in 1.2s ease-out;
+  /* Vivid in the side margins, faint behind the centered content column so
+     drifting doodles never make text hard to read. */
+  --doodle-mask: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(50% - 390px),
+    rgba(0, 0, 0, 0.28) calc(50% - 320px),
+    rgba(0, 0, 0, 0.28) calc(50% + 320px),
+    #000 calc(50% + 390px),
+    #000 100%
+  );
+  -webkit-mask-image: var(--doodle-mask);
+  mask-image: var(--doodle-mask);
 }
 .doodle {
   position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+  transform: translate(var(--x0), var(--y0)) rotate(var(--r0));
+  animation: doodle-drift var(--dur) linear var(--delay) both;
+}
+/* Reduced motion: frozen mid-path, no drifting or wobbling. */
+.doodle-still,
+.doodle-still .doodle-art {
+  animation: none;
+}
+.doodle-art {
+  display: block;
   filter: url(#chalk);
+  animation: doodle-bob var(--bob) ease-in-out infinite alternate;
 }
 /* White chalk has no contrast on a white page, so give it a soft edge there. */
 .doodle-white {
@@ -67,13 +97,34 @@ body {
 :root.dark .doodle-white {
   filter: url(#chalk);
 }
-@media (max-width: 640px) {
-  .doodle-layer {
-    opacity: 0.32;
+.doodle-art path,
+.doodle-art ellipse,
+.doodle-art circle {
+  vector-effect: non-scaling-stroke;
+}
+@keyframes doodle-drift {
+  to {
+    transform: translate(var(--x1), var(--y1)) rotate(var(--r1));
   }
 }
-.doodle path,
-.doodle ellipse,
-.doodle circle {
-  vector-effect: non-scaling-stroke;
+@keyframes doodle-bob {
+  from {
+    transform: rotate(-7deg) translateY(-5px);
+  }
+  to {
+    transform: rotate(7deg) translateY(5px);
+  }
+}
+@keyframes doodle-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (max-width: 760px) {
+  /* No margins to hide in: fade the whole layer instead of masking it. */
+  .doodle-layer {
+    opacity: 0.32;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
 }

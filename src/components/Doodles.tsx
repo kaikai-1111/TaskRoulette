@@ -1,8 +1,17 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useEffect, useState, type ReactNode } from "react";
 
 // Sidewalk-chalk wallpaper: outlined doodles, one flat color each, fixed
 // behind the whole app. Purely decorative — aria-hidden, no pointer events,
 // and it sits below all content (see .doodle-layer in globals.css).
+//
+// Every page load rolls a fresh set (shape, color, size, orientation, path).
+// Each doodle drifts across the screen, leaves off the opposite edge, and is
+// replaced by a new random one. Rolled in an effect, not during render, so the
+// server HTML and first client render match (the layer fades in after mount).
+// Future: user-submitted drawings can join the pool by adding entries to
+// SHAPES (or a second source) — nothing below assumes a fixed set.
 
 const COLORS = {
   pink: "#ff2e93",
@@ -129,44 +138,85 @@ const SHAPES: Record<string, ReactNode> = {
 };
 
 interface Doodle {
-  shape: keyof typeof SHAPES;
+  id: number;
+  shape: string;
   color: ColorName;
-  x: number; // % from left (center of the doodle)
-  y: number; // % from top
   size: number; // px
-  rot: number; // deg
+  x0: number; // px, start/end of the drift (top-left of the doodle)
+  y0: number;
+  x1: number;
+  y1: number;
+  r0: number; // deg
+  r1: number;
+  duration: number; // s
+  delay: number; // s (negative = already mid-flight on first paint)
+  bob: number; // s, gentle wobble period
 }
 
-// Hand-placed so the colors and shapes are spread evenly. Mostly hugging the
-// left/right edges where there's no text; a few in the middle for texture.
-const DOODLES: Doodle[] = [
-  { shape: "flower", color: "pink", x: 5, y: 14, size: 96, rot: -12 },
-  { shape: "pencil", color: "yellow", x: 94, y: 10, size: 100, rot: 8 },
-  { shape: "star", color: "orange", x: 14, y: 36, size: 64, rot: 14 },
-  { shape: "cloud", color: "white", x: 88, y: 30, size: 104, rot: 0 },
-  { shape: "heart", color: "red", x: 4, y: 58, size: 76, rot: -16 },
-  { shape: "sun", color: "yellow", x: 95, y: 52, size: 90, rot: 10 },
-  { shape: "butterfly", color: "violet", x: 11, y: 80, size: 92, rot: -8 },
-  { shape: "spiral", color: "green", x: 92, y: 74, size: 78, rot: 20 },
-  { shape: "smiley", color: "blue", x: 50, y: 93, size: 70, rot: -6 },
-  { shape: "plane", color: "indigo", x: 80, y: 90, size: 84, rot: -14 },
-  { shape: "bolt", color: "orange", x: 22, y: 94, size: 62, rot: 10 },
-  { shape: "daisy", color: "white", x: 19, y: 50, size: 80, rot: 18 },
-  { shape: "note", color: "green", x: 70, y: 5, size: 66, rot: -10 },
-  { shape: "hopscotch", color: "brown", x: 3, y: 38, size: 80, rot: -6 },
-  { shape: "umbrella", color: "gray", x: 97, y: 92, size: 86, rot: 14 },
-  { shape: "crayon", color: "pink", x: 40, y: 98, size: 70, rot: 24 },
-  { shape: "flower", color: "orange", x: 84, y: 62, size: 56, rot: 30 },
-  { shape: "star", color: "violet", x: 8, y: 98, size: 52, rot: -20 },
-  { shape: "heart", color: "gray", x: 60, y: 2, size: 48, rot: 12 },
-  { shape: "pencil", color: "green", x: 18, y: 66, size: 70, rot: -30 },
-  { shape: "spiral", color: "red", x: 52, y: 4, size: 52, rot: -8 },
-  { shape: "cloud", color: "blue", x: 76, y: 44, size: 72, rot: 6 },
-  { shape: "smiley", color: "brown", x: 17, y: 22, size: 50, rot: 12 },
-  { shape: "sun", color: "pink", x: 66, y: 98, size: 58, rot: 0 },
-];
+const SHAPE_NAMES = Object.keys(SHAPES);
+const COLOR_NAMES = Object.keys(COLORS) as ColorName[];
+const rand = (min: number, max: number) => min + Math.random() * (max - min);
+const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+let nextId = 0;
+
+// A new doodle on a straight, slow path from one edge to the opposite one.
+// `midFlight` puts it somewhere along that path already (first paint).
+function spawn(midFlight: boolean): Doodle {
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const small = W < 640;
+  const size = Math.round(rand(small ? 44 : 56, small ? 80 : 108));
+  const pad = size * 1.5; // far enough off-screen to hide it even when rotated
+  const edge = Math.floor(Math.random() * 4);
+  const along = (len: number) => rand(-0.05 * len, 1.05 * len);
+  const wander = (from: number, len: number) => Math.min(1.1 * len, Math.max(-0.1 * len, from + rand(-0.35, 0.35) * len));
+
+  let x0: number, y0: number, x1: number, y1: number;
+  if (edge === 0) {
+    x0 = -pad; x1 = W + pad; y0 = along(H); y1 = wander(y0, H);
+  } else if (edge === 1) {
+    x0 = W + pad; x1 = -pad; y0 = along(H); y1 = wander(y0, H);
+  } else if (edge === 2) {
+    y0 = -pad; y1 = H + pad; x0 = along(W); x1 = wander(x0, W);
+  } else {
+    y0 = H + pad; y1 = -pad; x0 = along(W); x1 = wander(x0, W);
+  }
+
+  const speed = rand(10, 26); // px/s — slow enough to read as floating
+  const duration = Math.hypot(x1 - x0, y1 - y0) / speed;
+  const r0 = rand(-180, 180);
+  return {
+    id: nextId++,
+    shape: pick(SHAPE_NAMES),
+    color: pick(COLOR_NAMES),
+    size,
+    x0, y0, x1, y1,
+    r0,
+    r1: r0 + rand(-100, 100),
+    duration,
+    delay: midFlight ? -rand(0.03, 0.97) * duration : 0,
+    bob: rand(4, 9),
+  };
+}
 
 export default function Doodles() {
+  const [doodles, setDoodles] = useState<Doodle[]>([]);
+  const [still, setStill] = useState(false);
+
+  useEffect(() => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const count = window.innerWidth < 640 ? 12 : 22;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setStill(reduce);
+    setDoodles(Array.from({ length: count }, () => spawn(true)));
+  }, []);
+
+  // When one finishes its trip, swap in a brand-new random one.
+  function replace(id: number) {
+    setDoodles((list) => list.map((d) => (d.id === id ? spawn(false) : d)));
+  }
+
   return (
     <div className="doodle-layer" aria-hidden="true">
       {/* Roughens every outline a little, like chalk on pavement. */}
@@ -176,28 +226,44 @@ export default function Doodles() {
           <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" />
         </filter>
       </svg>
-      {DOODLES.map((d, i) => (
-        <svg
-          key={i}
-          viewBox="0 0 64 64"
-          width={d.size}
-          height={d.size}
-          className={`doodle ${d.color === "white" ? "doodle-white" : ""}`}
-          style={{
-            left: `${d.x}%`,
-            top: `${d.y}%`,
-            color: COLORS[d.color],
-            transform: `translate(-50%, -50%) rotate(${d.rot}deg)`,
-          }}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <g vectorEffect="non-scaling-stroke">{SHAPES[d.shape]}</g>
-        </svg>
-      ))}
+      {doodles.map((d) => {
+        // Reduced motion: freeze each one where it would be mid-path.
+        const t = still ? 0.5 : 0;
+        const vars = {
+          "--x0": `${d.x0 + (d.x1 - d.x0) * t}px`,
+          "--y0": `${d.y0 + (d.y1 - d.y0) * t}px`,
+          "--x1": `${d.x1}px`,
+          "--y1": `${d.y1}px`,
+          "--r0": `${d.r0}deg`,
+          "--r1": `${d.r1}deg`,
+          "--dur": `${d.duration}s`,
+          "--delay": `${d.delay}s`,
+          "--bob": `${d.bob}s`,
+        } as React.CSSProperties;
+        return (
+          <div
+            key={d.id}
+            className={`doodle ${still ? "doodle-still" : ""}`}
+            style={{ ...vars, width: d.size, height: d.size }}
+            onAnimationEnd={(e) => e.target === e.currentTarget && replace(d.id)}
+          >
+            <svg
+              viewBox="0 0 64 64"
+              width={d.size}
+              height={d.size}
+              className={`doodle-art ${d.color === "white" ? "doodle-white" : ""}`}
+              style={{ color: COLORS[d.color] }}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {SHAPES[d.shape]}
+            </svg>
+          </div>
+        );
+      })}
     </div>
   );
 }
