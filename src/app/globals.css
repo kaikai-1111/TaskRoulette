@@ -109,10 +109,10 @@ body {
 }
 @keyframes doodle-bob {
   from {
-    transform: rotate(-7deg) translateY(-5px);
+    transform: rotate(-10deg) translateY(-9px);
   }
   to {
-    transform: rotate(7deg) translateY(5px);
+    transform: rotate(10deg) translateY(9px);
   }
 }
 @keyframes doodle-fade-in {

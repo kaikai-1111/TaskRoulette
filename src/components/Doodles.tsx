@@ -183,7 +183,7 @@ function spawn(midFlight: boolean): Doodle {
     y0 = H + pad; y1 = -pad; x0 = along(W); x1 = wander(x0, W);
   }
 
-  const speed = rand(10, 26); // px/s — slow enough to read as floating
+  const speed = rand(30, 70); // px/s — a lazy float you can actually see
   const duration = Math.hypot(x1 - x0, y1 - y0) / speed;
   const r0 = rand(-180, 180);
   return {
@@ -193,10 +193,10 @@ function spawn(midFlight: boolean): Doodle {
     size,
     x0, y0, x1, y1,
     r0,
-    r1: r0 + rand(-100, 100),
+    r1: r0 + (Math.random() < 0.5 ? -1 : 1) * rand(120, 420), // a slow tumble
     duration,
     delay: midFlight ? -rand(0.03, 0.97) * duration : 0,
-    bob: rand(4, 9),
+    bob: rand(3, 7),
   };
 }
 
