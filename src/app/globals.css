@@ -45,3 +45,35 @@ body {
     system-ui,
     sans-serif;
 }
+
+/* Chalk-doodle wallpaper (components/Doodles.tsx). Fixed behind everything and
+   never interactive; quieter on phones, where doodles can't stay in the margins. */
+.doodle-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.92;
+}
+.doodle {
+  position: absolute;
+  filter: url(#chalk);
+}
+/* White chalk has no contrast on a white page, so give it a soft edge there. */
+.doodle-white {
+  filter: url(#chalk) drop-shadow(0 0 1.5px rgba(15, 23, 42, 0.5));
+}
+:root.dark .doodle-white {
+  filter: url(#chalk);
+}
+@media (max-width: 640px) {
+  .doodle-layer {
+    opacity: 0.32;
+  }
+}
+.doodle path,
+.doodle ellipse,
+.doodle circle {
+  vector-effect: non-scaling-stroke;
+}

@@ -5,6 +5,7 @@ import NavHeader from "@/components/NavHeader";
 import AgeGate from "@/components/AgeGate";
 import NameGate from "@/components/NameGate";
 import BanGate from "@/components/BanGate";
+import Doodles from "@/components/Doodles";
 import { CreditsProvider } from "@/components/CreditsProvider";
 import { IdentityProvider } from "@/components/IdentityProvider";
 import "./globals.css";
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script id="theme-init" strategy="beforeInteractive">
           {THEME_INIT_SCRIPT}
         </Script>
+        <Doodles />
         <CreditsProvider>
           <IdentityProvider>
             <NavHeader />
