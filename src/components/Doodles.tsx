@@ -1,15 +1,25 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  isGone,
+  overlaps,
+  spawnEntering,
+  spawnOnScreen,
+  step,
+  type Body,
+} from "@/lib/doodle-physics";
 
 // Sidewalk-chalk wallpaper: outlined doodles, one flat color each, fixed
 // behind the whole app. Purely decorative — aria-hidden, no pointer events,
 // and it sits below all content (see .doodle-layer in globals.css).
 //
 // Every page load rolls a fresh set (shape, color, size, orientation, path).
-// Each doodle drifts across the screen, leaves off the opposite edge, and is
-// replaced by a new random one. Rolled in an effect, not during render, so the
-// server HTML and first client render match (the layer fades in after mount).
+// Doodles float and spin, bounce off each other (lib/doodle-physics.ts), drift
+// off the screen, and are replaced by a new random one entering from an edge.
+// Rolled in an effect, not during render, so the server HTML and first client
+// render match (the layer fades in after mount). Positions are written straight
+// to the DOM each frame — React only re-renders when a doodle is swapped.
 // Future: user-submitted drawings can join the pool by adding entries to
 // SHAPES (or a second source) — nothing below assumes a fixed set.
 
@@ -142,14 +152,6 @@ interface Doodle {
   shape: string;
   color: ColorName;
   size: number; // px
-  x0: number; // px, start/end of the drift (top-left of the doodle)
-  y0: number;
-  x1: number;
-  y1: number;
-  r0: number; // deg
-  r1: number;
-  duration: number; // s
-  delay: number; // s (negative = already mid-flight on first paint)
   bob: number; // s, gentle wobble period
 }
 
@@ -160,62 +162,87 @@ const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.le
 
 let nextId = 0;
 
-// A new doodle on a straight, slow path from one edge to the opposite one.
-// `midFlight` puts it somewhere along that path already (first paint).
-function spawn(midFlight: boolean): Doodle {
-  const W = window.innerWidth;
-  const H = window.innerHeight;
-  const small = W < 640;
-  const size = Math.round(rand(small ? 44 : 56, small ? 80 : 108));
-  const pad = size * 1.5; // far enough off-screen to hide it even when rotated
-  const edge = Math.floor(Math.random() * 4);
-  const along = (len: number) => rand(-0.05 * len, 1.05 * len);
-  const wander = (from: number, len: number) => Math.min(1.1 * len, Math.max(-0.1 * len, from + rand(-0.35, 0.35) * len));
-
-  let x0: number, y0: number, x1: number, y1: number;
-  if (edge === 0) {
-    x0 = -pad; x1 = W + pad; y0 = along(H); y1 = wander(y0, H);
-  } else if (edge === 1) {
-    x0 = W + pad; x1 = -pad; y0 = along(H); y1 = wander(y0, H);
-  } else if (edge === 2) {
-    y0 = -pad; y1 = H + pad; x0 = along(W); x1 = wander(x0, W);
-  } else {
-    y0 = H + pad; y1 = -pad; x0 = along(W); x1 = wander(x0, W);
-  }
-
-  const speed = rand(30, 70); // px/s — a lazy float you can actually see
-  const duration = Math.hypot(x1 - x0, y1 - y0) / speed;
-  const r0 = rand(-180, 180);
+function newLook(): Doodle {
+  const small = window.innerWidth < 640;
   return {
     id: nextId++,
     shape: pick(SHAPE_NAMES),
     color: pick(COLOR_NAMES),
-    size,
-    x0, y0, x1, y1,
-    r0,
-    r1: r0 + (Math.random() < 0.5 ? -1 : 1) * rand(120, 420), // a slow tumble
-    duration,
-    delay: midFlight ? -rand(0.03, 0.97) * duration : 0,
+    size: Math.round(rand(small ? 44 : 56, small ? 80 : 108)),
     bob: rand(3, 7),
   };
+}
+
+// Roughly one doodle per 26,000 px² of screen: busy, but not a wall of them.
+function doodleCount(): number {
+  const n = Math.round((window.innerWidth * window.innerHeight) / 26000);
+  return Math.max(14, Math.min(48, n));
 }
 
 export default function Doodles() {
   const [doodles, setDoodles] = useState<Doodle[]>([]);
   const [still, setStill] = useState(false);
+  // Physics state and DOM nodes live outside React state: they change every frame.
+  const bodies = useRef(new Map<number, Body>());
+  const nodes = useRef(new Map<number, HTMLDivElement>());
+
+  function place(id: number) {
+    const b = bodies.current.get(id);
+    const el = nodes.current.get(id);
+    if (b && el) {
+      el.style.transform = `translate(${(b.x - b.size / 2).toFixed(1)}px, ${(b.y - b.size / 2).toFixed(1)}px) rotate(${b.r.toFixed(1)}deg)`;
+    }
+  }
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const count = window.innerWidth < 640 ? 12 : 22;
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const live = bodies.current;
+
+    // Initial set: spread over the screen, not overlapping where we can help it.
+    const initial: Doodle[] = [];
+    for (let i = 0; i < doodleCount(); i++) {
+      const look = newLook();
+      let body = spawnOnScreen(W, H, look.size, Math.random);
+      for (let t = 0; t < 25; t++) {
+        if (![...live.values()].some((o) => overlaps(body, o))) break;
+        body = spawnOnScreen(W, H, look.size, Math.random);
+      }
+      live.set(look.id, body);
+      initial.push(look);
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setStill(reduce);
-    setDoodles(Array.from({ length: count }, () => spawn(true)));
-  }, []);
+    setDoodles(initial);
+    if (reduce) return; // frozen where they landed
 
-  // When one finishes its trip, swap in a brand-new random one.
-  function replace(id: number) {
-    setDoodles((list) => list.map((d) => (d.id === id ? spawn(false) : d)));
-  }
+    let last = performance.now();
+    let raf = 0;
+    function frame(now: number) {
+      const dt = Math.min((now - last) / 1000, 0.05); // a backgrounded tab shouldn't teleport them
+      last = now;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      step([...live.values()], dt, w, h, Math.random);
+
+      const swaps = new Map<number, Doodle>();
+      for (const [id, b] of live) {
+        if (isGone(b, w, h)) {
+          const look = newLook();
+          live.set(look.id, spawnEntering(w, h, look.size, Math.random));
+          live.delete(id);
+          swaps.set(id, look);
+        } else {
+          place(id);
+        }
+      }
+      if (swaps.size) setDoodles((list) => list.map((d) => swaps.get(d.id) ?? d));
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   return (
     <div className="doodle-layer" aria-hidden="true">
@@ -226,44 +253,37 @@ export default function Doodles() {
           <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" />
         </filter>
       </svg>
-      {doodles.map((d) => {
-        // Reduced motion: freeze each one where it would be mid-path.
-        const t = still ? 0.5 : 0;
-        const vars = {
-          "--x0": `${d.x0 + (d.x1 - d.x0) * t}px`,
-          "--y0": `${d.y0 + (d.y1 - d.y0) * t}px`,
-          "--x1": `${d.x1}px`,
-          "--y1": `${d.y1}px`,
-          "--r0": `${d.r0}deg`,
-          "--r1": `${d.r1}deg`,
-          "--dur": `${d.duration}s`,
-          "--delay": `${d.delay}s`,
-          "--bob": `${d.bob}s`,
-        } as React.CSSProperties;
-        return (
-          <div
-            key={d.id}
-            className={`doodle ${still ? "doodle-still" : ""}`}
-            style={{ ...vars, width: d.size, height: d.size }}
-            onAnimationEnd={(e) => e.target === e.currentTarget && replace(d.id)}
+      {doodles.map((d) => (
+        <div
+          key={d.id}
+          ref={(el) => {
+            // Put it in place the moment it mounts, before the next frame.
+            if (el) {
+              nodes.current.set(d.id, el);
+              place(d.id);
+            } else {
+              nodes.current.delete(d.id);
+            }
+          }}
+          className={`doodle ${still ? "doodle-still" : ""}`}
+          style={{ "--bob": `${d.bob}s`, width: d.size, height: d.size } as React.CSSProperties}
+        >
+          <svg
+            viewBox="0 0 64 64"
+            width={d.size}
+            height={d.size}
+            className={`doodle-art ${d.color === "white" ? "doodle-white" : ""}`}
+            style={{ color: COLORS[d.color] }}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <svg
-              viewBox="0 0 64 64"
-              width={d.size}
-              height={d.size}
-              className={`doodle-art ${d.color === "white" ? "doodle-white" : ""}`}
-              style={{ color: COLORS[d.color] }}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              {SHAPES[d.shape]}
-            </svg>
-          </div>
-        );
-      })}
+            {SHAPES[d.shape]}
+          </svg>
+        </div>
+      ))}
     </div>
   );
 }

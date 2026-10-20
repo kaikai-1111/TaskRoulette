@@ -48,8 +48,7 @@ body {
 
 /* Chalk-doodle wallpaper (components/Doodles.tsx). Fixed behind everything and
    never interactive; quieter on phones, where doodles can't stay in the margins.
-   Each doodle drifts along a path set by its CSS variables, then the component
-   swaps in a new one. */
+   Position and rotation are set per frame from JS (components/Doodles.tsx). */
 .doodle-layer {
   position: fixed;
   inset: 0;
@@ -77,10 +76,8 @@ body {
   left: 0;
   top: 0;
   will-change: transform;
-  transform: translate(var(--x0), var(--y0)) rotate(var(--r0));
-  animation: doodle-drift var(--dur) linear var(--delay) both;
 }
-/* Reduced motion: frozen mid-path, no drifting or wobbling. */
+/* Reduced motion: frozen where they landed, no wobbling. */
 .doodle-still,
 .doodle-still .doodle-art {
   animation: none;
@@ -101,11 +98,6 @@ body {
 .doodle-art ellipse,
 .doodle-art circle {
   vector-effect: non-scaling-stroke;
-}
-@keyframes doodle-drift {
-  to {
-    transform: translate(var(--x1), var(--y1)) rotate(var(--r1));
-  }
 }
 @keyframes doodle-bob {
   from {
