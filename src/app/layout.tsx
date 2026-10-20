@@ -6,6 +6,7 @@ import AgeGate from "@/components/AgeGate";
 import NameGate from "@/components/NameGate";
 import BanGate from "@/components/BanGate";
 import Doodles from "@/components/Doodles";
+import ContributeLink from "@/components/ContributeLink";
 import { CreditsProvider } from "@/components/CreditsProvider";
 import { IdentityProvider } from "@/components/IdentityProvider";
 import "./globals.css";
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CreditsProvider>
           <IdentityProvider>
             <NavHeader />
+            <ContributeLink />
             <main className="flex flex-1 flex-col">
               <BanGate>
                 <AgeGate>

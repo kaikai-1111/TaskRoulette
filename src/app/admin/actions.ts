@@ -247,3 +247,38 @@ export async function removeSubmissionAction(submissionId: string) {
   });
   revalidatePath("/admin");
 }
+
+// ---- Background drawings ----
+
+export async function getDrawingsForAdmin() {
+  await requireAdmin();
+  return prisma.backgroundDrawing.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 150,
+    include: { creator: { select: { id: true, username: true, isBanned: true, isAdmin: true } }, _count: { select: { reports: true } } },
+  });
+}
+
+export async function setDrawingStatusAction(drawingId: string, status: "ACTIVE" | "REMOVED") {
+  await requireAdmin();
+  await prisma.backgroundDrawing.update({ where: { id: drawingId }, data: { status } });
+  revalidatePath("/admin/drawings");
+}
+
+// Removes the drawing, bans whoever drew it (the ban follows their device),
+// and takes down everything else they've drawn.
+export async function banDrawingArtistAction(drawingId: string) {
+  await requireAdmin();
+  const drawing = await prisma.backgroundDrawing.findUnique({ where: { id: drawingId }, include: { creator: true } });
+  if (!drawing) return;
+  const artist = drawing.creator;
+  if (artist.isAdmin || artist.id === (await getCurrentUser()).id) return;
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: artist.id },
+      data: { isBanned: true, bannedAt: new Date(), banReason: "Inappropriate background drawing" },
+    }),
+    prisma.backgroundDrawing.updateMany({ where: { creatorId: artist.id }, data: { status: "REMOVED" } }),
+  ]);
+  revalidatePath("/admin/drawings");
+}

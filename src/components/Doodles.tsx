@@ -9,6 +9,9 @@ import {
   step,
   type Body,
 } from "@/lib/doodle-physics";
+import { DOODLE_COLORS, type DoodleColor } from "@/lib/doodle-colors";
+import { strokesToPath } from "@/lib/drawing";
+import { getBackgroundDrawings, type BackgroundDrawingData } from "@/app/draw/actions";
 
 // Sidewalk-chalk wallpaper: outlined doodles, one flat color each, fixed
 // behind the whole app. Purely decorative — aria-hidden, no pointer events,
@@ -23,20 +26,8 @@ import {
 // Future: user-submitted drawings can join the pool by adding entries to
 // SHAPES (or a second source) — nothing below assumes a fixed set.
 
-const COLORS = {
-  pink: "#ff2e93",
-  red: "#ef2b2b",
-  orange: "#ff8a1f",
-  yellow: "#ffc400",
-  green: "#22c55e",
-  blue: "#2b7bff",
-  indigo: "#5b4bff",
-  violet: "#b44bff",
-  brown: "#8a5a34",
-  gray: "#9aa3b2",
-  white: "#ffffff",
-} as const;
-type ColorName = keyof typeof COLORS;
+const COLORS = DOODLE_COLORS;
+type ColorName = DoodleColor;
 
 function starPath(points: number, outer: number, inner: number): string {
   const cx = 32;
@@ -149,7 +140,8 @@ const SHAPES: Record<string, ReactNode> = {
 
 interface Doodle {
   id: number;
-  shape: string;
+  shape: string; // key of SHAPES, unless `drawing` is set
+  drawing?: BackgroundDrawingData; // a visitor's drawing from today
   color: ColorName;
   size: number; // px
   bob: number; // s, gentle wobble period
@@ -162,8 +154,22 @@ const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.le
 
 let nextId = 0;
 
-function newLook(): Doodle {
+// Mixes in today's visitor drawings: the more there are, the likelier one is
+// picked (up to 60%), and the same drawing is never on screen twice at once.
+function newLook(pool: BackgroundDrawingData[], inUse: Set<string>): Doodle {
   const small = window.innerWidth < 640;
+  const free = pool.filter((d) => !inUse.has(d.id));
+  if (free.length > 0 && Math.random() < Math.min(0.6, pool.length * 0.1)) {
+    const drawing = pick(free);
+    return {
+      id: nextId++,
+      shape: "",
+      drawing,
+      color: drawing.color,
+      size: Math.round(rand(small ? 60 : 80, small ? 90 : 120)),
+      bob: rand(3, 7),
+    };
+  }
   return {
     id: nextId++,
     shape: pick(SHAPE_NAMES),
@@ -195,53 +201,69 @@ export default function Doodles() {
   }
 
   useEffect(() => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-    const live = bodies.current;
-
-    // Initial set: spread over the screen, not overlapping where we can help it.
-    const initial: Doodle[] = [];
-    for (let i = 0; i < doodleCount(); i++) {
-      const look = newLook();
-      let body = spawnOnScreen(W, H, look.size, Math.random);
-      for (let t = 0; t < 25; t++) {
-        if (![...live.values()].some((o) => overlaps(body, o))) break;
-        body = spawnOnScreen(W, H, look.size, Math.random);
-      }
-      live.set(look.id, body);
-      initial.push(look);
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setStill(reduce);
-    setDoodles(initial);
-    if (reduce) return; // frozen where they landed
-
-    let last = performance.now();
+    let cancelled = false;
     let raf = 0;
-    function frame(now: number) {
-      const dt = Math.min((now - last) / 1000, 0.05); // a backgrounded tab shouldn't teleport them
-      last = now;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      step([...live.values()], dt, w, h, Math.random);
+    const live = bodies.current;
+    live.clear();
 
-      const swaps = new Map<number, Doodle>();
-      for (const [id, b] of live) {
-        if (isGone(b, w, h)) {
-          const look = newLook();
-          live.set(look.id, spawnEntering(w, h, look.size, Math.random));
-          live.delete(id);
-          swaps.set(id, look);
-        } else {
-          place(id);
+    function start(pool: BackgroundDrawingData[]) {
+      if (cancelled) return;
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const looks = new Map<number, Doodle>();
+      const inUse = () => new Set([...looks.values()].flatMap((d) => (d.drawing ? [d.drawing.id] : [])));
+
+      // Initial set: spread over the screen, not overlapping where we can help it.
+      for (let i = 0; i < doodleCount(); i++) {
+        const look = newLook(pool, inUse());
+        let body = spawnOnScreen(W, H, look.size, Math.random);
+        for (let t = 0; t < 25; t++) {
+          if (![...live.values()].some((o) => overlaps(body, o))) break;
+          body = spawnOnScreen(W, H, look.size, Math.random);
         }
+        live.set(look.id, body);
+        looks.set(look.id, look);
       }
-      if (swaps.size) setDoodles((list) => list.map((d) => swaps.get(d.id) ?? d));
+      setStill(reduce);
+      setDoodles([...looks.values()]);
+      if (reduce) return; // frozen where they landed
+
+      let last = performance.now();
+      function frame(now: number) {
+        const dt = Math.min((now - last) / 1000, 0.05); // a backgrounded tab shouldn't teleport them
+        last = now;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        step([...live.values()], dt, w, h, Math.random);
+
+        const swaps = new Map<number, Doodle>();
+        for (const [id, b] of live) {
+          if (isGone(b, w, h)) {
+            looks.delete(id);
+            const look = newLook(pool, inUse());
+            looks.set(look.id, look);
+            live.set(look.id, spawnEntering(w, h, look.size, Math.random));
+            live.delete(id);
+            swaps.set(id, look);
+          } else {
+            place(id);
+          }
+        }
+        if (swaps.size) setDoodles((list) => list.map((d) => swaps.get(d.id) ?? d));
+        raf = requestAnimationFrame(frame);
+      }
       raf = requestAnimationFrame(frame);
     }
-    raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+
+    // Today's visitor drawings join the pool; if that fails, built-ins are fine.
+    getBackgroundDrawings()
+      .catch(() => [] as BackgroundDrawingData[])
+      .then(start);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+    };
   }, []);
 
   return (
@@ -269,7 +291,7 @@ export default function Doodles() {
           style={{ "--bob": `${d.bob}s`, width: d.size, height: d.size } as React.CSSProperties}
         >
           <svg
-            viewBox="0 0 64 64"
+            viewBox={d.drawing ? "-3 -3 106 106" : "0 0 64 64"}
             width={d.size}
             height={d.size}
             className={`doodle-art ${d.color === "white" ? "doodle-white" : ""}`}
@@ -280,7 +302,7 @@ export default function Doodles() {
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            {SHAPES[d.shape]}
+            {d.drawing ? <path d={strokesToPath(d.drawing.strokes)} /> : SHAPES[d.shape]}
           </svg>
         </div>
       ))}

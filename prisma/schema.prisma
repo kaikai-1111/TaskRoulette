@@ -169,6 +169,8 @@ model User {
   models            MlModel[]
   modelPurchases    ModelPurchase[]
   powerUps          PowerUp[]
+  drawings          BackgroundDrawing[]
+  drawingReports    DrawingReport[]
 }
 
 // A posted challenge: a template type + creator-supplied config, applied over
@@ -324,4 +326,38 @@ model PowerUp {
   usedAt          DateTime?
 
   @@index([userId, usedAt])
+}
+
+enum DrawingStatus {
+  ACTIVE
+  FLAGGED // enough reports that it's hidden until an admin looks
+  REMOVED
+}
+
+// A drawing a visitor made for the page background. Only today's (UTC) ACTIVE
+// ones are shown; older rows are kept for moderation history.
+model BackgroundDrawing {
+  id        String        @id @default(cuid())
+  creatorId String
+  creator   User          @relation(fields: [creatorId], references: [id])
+  color     String // a name from lib/doodle-colors.ts
+  strokes   String // JSON: number[][] on a 100x100 board (lib/drawing.ts)
+  status    DrawingStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+
+  reports DrawingReport[]
+
+  @@index([status, createdAt])
+  @@index([creatorId])
+}
+
+model DrawingReport {
+  id         String            @id @default(cuid())
+  drawingId  String
+  drawing    BackgroundDrawing @relation(fields: [drawingId], references: [id], onDelete: Cascade)
+  reporterId String
+  reporter   User              @relation(fields: [reporterId], references: [id])
+  createdAt  DateTime          @default(now())
+
+  @@unique([drawingId, reporterId])
 }
