@@ -30,7 +30,7 @@ function parse(row: { id: string; color: string; strokes: string }): BackgroundD
 export async function submitDrawing(input: {
   color: string;
   strokes: unknown;
-}): Promise<{ ok: true } | { ok: false; error: string }> {
+}): Promise<{ ok: true; drawing: BackgroundDrawingData } | { ok: false; error: string }> {
   const user = await getActiveUser(); // banned visitors can't add to the background
   if (!isDoodleColor(input.color)) return { ok: false, error: "Pick one of the colors." };
   const strokes = cleanStrokes(input.strokes);
@@ -46,11 +46,11 @@ export async function submitDrawing(input: {
     return { ok: false, error: "Give it a few seconds between drawings." };
   }
 
-  await prisma.backgroundDrawing.create({
+  const row = await prisma.backgroundDrawing.create({
     data: { creatorId: user.id, color: input.color, strokes: JSON.stringify(strokes) },
   });
   revalidatePath("/draw");
-  return { ok: true };
+  return { ok: true, drawing: { id: row.id, color: input.color, strokes } };
 }
 
 // A random handful of today's drawings for the background. Needs no identity.

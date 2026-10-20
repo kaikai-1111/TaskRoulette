@@ -82,6 +82,9 @@ body {
 .doodle-still .doodle-art {
   animation: none;
 }
+.doodle-new {
+  animation: doodle-fade-in 0.8s ease-out;
+}
 .doodle-art {
   display: block;
   filter: url(#chalk);

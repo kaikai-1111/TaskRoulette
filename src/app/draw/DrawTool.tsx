@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { submitDrawing } from "./actions";
-import { DRAWING, strokesToPath } from "@/lib/drawing";
+import { DRAWING, DRAWING_ADDED_EVENT, strokesToPath } from "@/lib/drawing";
 import { DOODLE_COLORS, DOODLE_COLOR_NAMES, type DoodleColor } from "@/lib/doodle-colors";
 
 const MIN_STEP = 0.6; // board units; skips points too close to the last one
@@ -94,6 +94,7 @@ export default function DrawTool() {
         setMessage({ kind: "error", text: result.error });
         return;
       }
+      window.dispatchEvent(new CustomEvent(DRAWING_ADDED_EVENT, { detail: result.drawing }));
       setMessage({ kind: "ok", text: "It's on the wall! It'll float around the background until midnight UTC." });
       setStrokes([]);
       setStartedAt(null);

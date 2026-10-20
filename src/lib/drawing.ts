@@ -17,6 +17,10 @@ export const DRAWING = {
 
 export type Strokes = number[][];
 
+// Fired on window after a drawing is saved, so the background can show it at
+// once instead of waiting for the next reload.
+export const DRAWING_ADDED_EVENT = "background-drawing-added";
+
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
 // Returns a cleaned copy, or null if the input isn't a plausible drawing.

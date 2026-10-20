@@ -10,7 +10,7 @@ import {
   type Body,
 } from "@/lib/doodle-physics";
 import { DOODLE_COLORS, type DoodleColor } from "@/lib/doodle-colors";
-import { strokesToPath } from "@/lib/drawing";
+import { DRAWING_ADDED_EVENT, strokesToPath } from "@/lib/drawing";
 import { getBackgroundDrawings, type BackgroundDrawingData } from "@/app/draw/actions";
 
 // Sidewalk-chalk wallpaper: outlined doodles, one flat color each, fixed
@@ -145,6 +145,7 @@ interface Doodle {
   color: ColorName;
   size: number; // px
   bob: number; // s, gentle wobble period
+  fresh?: boolean; // a drawing just saved on this page: fade in instead of popping
 }
 
 const SHAPE_NAMES = Object.keys(SHAPES);
@@ -155,11 +156,12 @@ const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.le
 let nextId = 0;
 
 // Mixes in today's visitor drawings: the more there are, the likelier one is
-// picked (up to 60%), and the same drawing is never on screen twice at once.
-function newLook(pool: BackgroundDrawingData[], inUse: Set<string>): Doodle {
+// picked (20% with one, up to 60%), and the same drawing is never on screen
+// twice at once. `force` skips the dice (used to guarantee a few on first paint).
+function newLook(pool: BackgroundDrawingData[], inUse: Set<string>, force = false): Doodle {
   const small = window.innerWidth < 640;
   const free = pool.filter((d) => !inUse.has(d.id));
-  if (free.length > 0 && Math.random() < Math.min(0.6, pool.length * 0.1)) {
+  if (free.length > 0 && (force || Math.random() < Math.min(0.6, 0.1 + pool.length * 0.1))) {
     const drawing = pick(free);
     return {
       id: nextId++,
@@ -203,6 +205,10 @@ export default function Doodles() {
   useEffect(() => {
     let cancelled = false;
     let raf = 0;
+    let onAdded: ((d: BackgroundDrawingData) => void) | null = null;
+    const handleAdded = (e: Event) => onAdded?.((e as CustomEvent<BackgroundDrawingData>).detail);
+    window.addEventListener(DRAWING_ADDED_EVENT, handleAdded);
+    let refresh: ReturnType<typeof setInterval> | undefined;
     const live = bodies.current;
     live.clear();
 
@@ -216,7 +222,8 @@ export default function Doodles() {
 
       // Initial set: spread over the screen, not overlapping where we can help it.
       for (let i = 0; i < doodleCount(); i++) {
-        const look = newLook(pool, inUse());
+        // Today's drawings are the point, so the first few slots are always theirs.
+        const look = newLook(pool, inUse(), i < Math.min(pool.length, 4));
         let body = spawnOnScreen(W, H, look.size, Math.random);
         for (let t = 0; t < 25; t++) {
           if (![...live.values()].some((o) => overlaps(body, o))) break;
@@ -228,6 +235,38 @@ export default function Doodles() {
       setStill(reduce);
       setDoodles([...looks.values()]);
       if (reduce) return; // frozen where they landed
+
+      // A drawing saved while this page is open pops in right away, in place
+      // of one of the built-in doodles, instead of waiting for the next load.
+      onAdded = (drawing) => {
+        if (!pool.some((d) => d.id === drawing.id)) pool.push(drawing);
+        const victim = [...looks.values()].find((d) => !d.drawing);
+        const look: Doodle = {
+          id: nextId++,
+          shape: "",
+          drawing,
+          color: drawing.color,
+          size: Math.round(rand(window.innerWidth < 640 ? 70 : 90, window.innerWidth < 640 ? 95 : 120)),
+          bob: rand(3, 7),
+          fresh: true,
+        };
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        let body = spawnOnScreen(w, h, look.size, Math.random);
+        for (let t = 0; t < 25; t++) {
+          if (![...live.values()].some((o) => overlaps(body, o))) break;
+          body = spawnOnScreen(w, h, look.size, Math.random);
+        }
+        live.set(look.id, body);
+        looks.set(look.id, look);
+        if (victim) {
+          live.delete(victim.id);
+          looks.delete(victim.id);
+          setDoodles((list) => [...list.filter((d) => d.id !== victim.id), look]);
+        } else {
+          setDoodles((list) => [...list, look]);
+        }
+      };
 
       let last = performance.now();
       function frame(now: number) {
@@ -257,12 +296,23 @@ export default function Doodles() {
     }
 
     // Today's visitor drawings join the pool; if that fails, built-ins are fine.
+    // The pool is refreshed every couple of minutes so other people's new
+    // drawings (and removals) show up without a reload.
     getBackgroundDrawings()
       .catch(() => [] as BackgroundDrawingData[])
-      .then(start);
+      .then((pool) => {
+        start(pool);
+        refresh = setInterval(() => {
+          getBackgroundDrawings()
+            .then((latest) => pool.splice(0, pool.length, ...latest))
+            .catch(() => {});
+        }, 120_000);
+      });
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
+      clearInterval(refresh);
+      window.removeEventListener(DRAWING_ADDED_EVENT, handleAdded);
     };
   }, []);
 
@@ -287,7 +337,7 @@ export default function Doodles() {
               nodes.current.delete(d.id);
             }
           }}
-          className={`doodle ${still ? "doodle-still" : ""}`}
+          className={`doodle ${still ? "doodle-still" : ""} ${d.fresh ? "doodle-new" : ""}`}
           style={{ "--bob": `${d.bob}s`, width: d.size, height: d.size } as React.CSSProperties}
         >
           <svg
