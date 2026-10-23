@@ -25,7 +25,7 @@ export default function BanUserForm({ userId }: { userId: string }) {
         disabled={pending}
         className="self-start rounded-full bg-red-500 hover:bg-red-600 px-5 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
       >
-        {pending ? "Banning…" : "🔨 Ban hammer"}
+        {pending ? "Banning…" : "Ban hammer"}
       </button>
     </form>
   );

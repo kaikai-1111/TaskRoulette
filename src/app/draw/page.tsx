@@ -12,7 +12,7 @@ export default async function DrawPage() {
       <h1 className="mb-2 text-2xl font-bold">Draw for the background</h1>
       <p className="mb-6 text-sm text-black/50 dark:text-white">
         You get one minute and one chalk color. Your drawing floats around behind every page for everyone, until
-        midnight UTC, when today&apos;s set resets. Make as many as you like — keep it friendly.
+        midnight UTC, when today&apos;s set resets. Make as many as you want, and keep them friendly.
       </p>
       <DrawTool />
 

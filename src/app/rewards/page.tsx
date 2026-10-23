@@ -71,7 +71,7 @@ export default function RewardsPage() {
       const base = `+${res.amount} ${res.kind === "TOKENS" ? "tokens" : "credits"}`;
       setMessage(
         res.bonus
-          ? `${base} — and a bonus power-up: ${POWERUP_LABELS[res.bonus.kind].name} for ${formatDuration(res.bonus.durationSeconds)}!`
+          ? `${base}, plus a bonus power-up: ${POWERUP_LABELS[res.bonus.kind].name} for ${formatDuration(res.bonus.durationSeconds)}!`
           : base
       );
     }
@@ -107,7 +107,7 @@ export default function RewardsPage() {
         </p>
       )}
 
-      <section className="rounded-xl border border-black/10 dark:border-white/15 p-4 flex flex-col gap-3">
+      <section className="card p-4 flex flex-col gap-3">
         <h2 className="font-semibold">Daily award</h2>
         {status.canClaim ? (
           <>
@@ -121,7 +121,7 @@ export default function RewardsPage() {
             <button
               onClick={handleClaim}
               disabled={busy !== null}
-              className="self-start rounded-full bg-orange-500 hover:bg-orange-600 px-6 py-2.5 font-semibold text-white disabled:opacity-40 active:scale-95 transition"
+              className="self-start btn btn-orange px-6 py-2.5 font-semibold text-white disabled:opacity-40 active:scale-95 transition"
             >
               {busy === "claim" ? "Claiming…" : "Claim"}
             </button>
@@ -129,7 +129,7 @@ export default function RewardsPage() {
         ) : (
           <p className="text-sm text-black/60 dark:text-white">
             Claimed for today. Next award in{" "}
-            <span className="font-mono font-semibold">{countdown(status.nextClaimAt - now)}</span> —{" "}
+            <span className="font-mono font-semibold">{countdown(status.nextClaimAt - now)}</span>:{" "}
             <span className="font-semibold">
               +{status.nextAmount} {status.nextKind === "TOKENS" ? "tokens" : "credits"}
             </span>
@@ -148,7 +148,7 @@ export default function RewardsPage() {
             >
               <span>
                 <span className="font-semibold">{POWERUP_LABELS[a.kind].name}</span>{" "}
-                <span className="text-black/50 dark:text-white">— {POWERUP_LABELS[a.kind].blurb}</span>
+                <span className="text-black/50 dark:text-white">{POWERUP_LABELS[a.kind].blurb}</span>
               </span>
               <span className="font-mono font-semibold shrink-0 ml-3">{countdown(a.until! - now)}</span>
             </div>
@@ -160,13 +160,13 @@ export default function RewardsPage() {
         <h2 className="font-semibold">Your power-ups</h2>
         {status.inventory.length === 0 ? (
           <p className="text-sm text-black/40 dark:text-white">
-            None yet — they drop from daily awards, or you can buy one below.
+            None yet. They drop from daily awards, or you can buy one below.
           </p>
         ) : (
           status.inventory.map((p) => (
             <div
               key={p.id}
-              className="flex items-center justify-between rounded-lg border border-black/10 dark:border-white/15 px-3 py-2"
+              className="flex items-center justify-between card px-3 py-2"
             >
               <div>
                 <p className="text-sm font-medium">
@@ -179,7 +179,7 @@ export default function RewardsPage() {
               <button
                 onClick={() => run(p.id, () => activatePowerUp(p.id), `${POWERUP_LABELS[p.kind].name} activated.`)}
                 disabled={busy !== null}
-                className="shrink-0 ml-3 rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+                className="shrink-0 ml-3 btn px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
               >
                 {busy === p.id ? "…" : "Activate"}
               </button>
@@ -191,7 +191,7 @@ export default function RewardsPage() {
       <section className="flex flex-col gap-2">
         <h2 className="font-semibold">Power-up shop</h2>
         <p className="text-xs text-black/50 dark:text-white">
-          Always paid for with your real balance — infinite effects don&apos;t make shop items free.
+          Shop items always cost real balance, even while an infinite power-up is running.
         </p>
         {POWERUP_SHOP.map((item) => {
           const balance = item.currency === "CREDITS" ? status.credits : status.tokens;
@@ -199,7 +199,7 @@ export default function RewardsPage() {
           return (
             <div
               key={item.id}
-              className="flex items-center justify-between rounded-lg border border-black/10 dark:border-white/15 px-3 py-2"
+              className="flex items-center justify-between card px-3 py-2"
             >
               <div>
                 <p className="text-sm font-medium">
@@ -210,7 +210,7 @@ export default function RewardsPage() {
               <button
                 onClick={() => run(item.id, () => buyPowerUp(item.id), "Added to your power-ups.")}
                 disabled={busy !== null || balance < item.price}
-                className="shrink-0 ml-3 rounded-full border border-black/10 dark:border-white/20 px-4 py-1.5 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
+                className="shrink-0 ml-3 btn btn-ghost px-4 py-1.5 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-40"
               >
                 {busy === item.id ? "…" : `${item.price} ${unit}`}
               </button>

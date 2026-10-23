@@ -41,7 +41,7 @@ export default async function AdminChallengesPage() {
             return (
               <li
                 key={c.id}
-                className="rounded-lg border border-black/10 dark:border-white/15 p-4 flex items-start justify-between gap-4"
+                className="card p-4 flex items-start justify-between gap-4"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -65,7 +65,7 @@ export default async function AdminChallengesPage() {
                 <div className="flex shrink-0 gap-2 text-sm">
                   <Link
                     href={`/challenges/${c.id}`}
-                    className="rounded-full border border-black/10 dark:border-white/15 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10"
+                    className="btn btn-ghost px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10"
                   >
                     View
                   </Link>

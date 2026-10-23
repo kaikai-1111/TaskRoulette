@@ -169,7 +169,7 @@ export default function DrawTool() {
           type="button"
           onClick={undo}
           disabled={strokes.length === 0 || locked}
-          className="rounded-full border border-black/15 dark:border-white/20 px-4 py-2 text-sm disabled:opacity-40"
+          className="btn btn-ghost px-4 py-2 text-sm disabled:opacity-40"
         >
           Undo
         </button>
@@ -177,7 +177,7 @@ export default function DrawTool() {
           type="button"
           onClick={clearAll}
           disabled={strokes.length === 0 && startedAt === null}
-          className="rounded-full border border-black/15 dark:border-white/20 px-4 py-2 text-sm disabled:opacity-40"
+          className="btn btn-ghost px-4 py-2 text-sm disabled:opacity-40"
         >
           Start over
         </button>
@@ -185,7 +185,7 @@ export default function DrawTool() {
           type="button"
           onClick={submit}
           disabled={!canSubmit}
-          className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-2 font-semibold text-white disabled:opacity-40"
+          className="btn px-6 py-2 font-semibold text-white disabled:opacity-40"
         >
           {submitting ? "Adding…" : "Add to background"}
         </button>

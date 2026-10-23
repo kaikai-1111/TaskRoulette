@@ -212,7 +212,7 @@ export default function NewModelPage() {
           <button
             type="submit"
             disabled={busy || !file || !config}
-            className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-2.5 font-semibold text-white disabled:opacity-40"
+            className="btn px-6 py-2.5 font-semibold text-white disabled:opacity-40"
           >
             {busy ? (progress !== null ? `Uploading… ${progress}%` : "Saving…") : "Upload"}
           </button>

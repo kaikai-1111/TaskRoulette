@@ -36,7 +36,7 @@ export default async function ModelPage({ params }: { params: Promise<{ id: stri
         {m.canDownload ? (
           <a
             href={`/api/models/${m.id}/download`}
-            className="inline-block rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-2.5 font-semibold text-white"
+            className="inline-block btn px-6 py-2.5 font-semibold text-white"
           >
             Download
           </a>

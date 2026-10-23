@@ -33,7 +33,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 text-center gap-4">
-      <p className="text-xl font-semibold">Before you jump in</p>
+      <p className="font-display text-3xl">One quick thing</p>
       <label className="flex items-start gap-2 max-w-xs text-left text-sm">
         <input
           type="checkbox"
@@ -53,7 +53,7 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
       <button
         onClick={handleContinue}
         disabled={!checked || submitting}
-        className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
+        className="btn px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
       >
         {submitting ? "…" : "Continue"}
       </button>

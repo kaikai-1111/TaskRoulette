@@ -87,7 +87,7 @@ export default function RatingCapture({ item, onSubmit }: CaptureProps) {
       <button
         onClick={() => value !== null && onSubmit({ value, ...(comment.trim() ? { comment: comment.trim() } : {}) })}
         disabled={value === null}
-        className="w-full rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
+        className="w-full btn px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
       >
         Submit
       </button>

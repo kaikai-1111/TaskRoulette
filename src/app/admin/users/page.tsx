@@ -40,7 +40,7 @@ export default async function AdminUsersPage({
         />
         <button
           type="submit"
-          className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-1.5 text-sm font-semibold text-white"
+          className="btn px-4 py-1.5 text-sm font-semibold text-white"
         >
           Search
         </button>
@@ -53,7 +53,7 @@ export default async function AdminUsersPage({
           {users.map((u) => (
             <li
               key={u.id}
-              className="flex items-center justify-between gap-4 rounded-lg border border-black/10 dark:border-white/15 px-3 py-2"
+              className="flex items-center justify-between gap-4 card px-3 py-2"
             >
               <div className="min-w-0">
                 <Link

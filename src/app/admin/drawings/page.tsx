@@ -34,7 +34,7 @@ export default async function AdminDrawingsPage() {
             const strokes = cleanStrokes(JSON.parse(d.strokes));
             const live = d.status === "ACTIVE" && d.createdAt.getTime() >= dayStart;
             return (
-              <li key={d.id} className="flex flex-col gap-2 rounded-lg border border-black/10 dark:border-white/15 p-2">
+              <li key={d.id} className="flex flex-col gap-2 card p-2">
                 <div className="aspect-square overflow-hidden rounded bg-[#1e293b]">
                   {strokes && isDoodleColor(d.color) && (
                     <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">

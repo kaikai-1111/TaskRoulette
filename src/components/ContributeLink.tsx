@@ -6,7 +6,7 @@ export default function ContributeLink() {
     <div className="flex justify-end px-4 pt-1.5">
       <Link
         href="/draw"
-        className="text-right text-xs text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:opacity-80"
+        className="font-display text-right text-base leading-tight text-blue-600 dark:text-blue-400 underline decoration-wavy decoration-1 underline-offset-4 hover:opacity-80"
       >
         Contribute your own drawing to be displayed in the background
       </Link>

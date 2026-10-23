@@ -4,12 +4,8 @@ import { TEMPLATE_TYPES } from "@/lib/templates/types";
 
 const TEMPLATE_LABELS = Object.fromEntries(TEMPLATE_TYPES.map((t) => [t.value, t.label.toLowerCase()]));
 
-const CARD_GRADIENTS = [
-  "from-blue-400/30 to-orange-300/30",
-  "from-orange-400/30 to-blue-300/30",
-  "from-sky-400/30 to-orange-400/30",
-  "from-blue-500/25 to-amber-400/30",
-];
+// Flat chalk tints (the doodle palette) instead of soft gradients.
+const CARD_TINTS = ["#ff2e93", "#ffc400", "#22c55e", "#2b7bff", "#ff8a1f", "#b44bff"];
 
 export default async function BrowsePage() {
   const challenges = await getTopChallenges();
@@ -39,10 +35,12 @@ export default async function BrowsePage() {
               <Link
                 key={c.id}
                 href={href}
-                className="group flex flex-col rounded-xl border border-black/10 dark:border-white/15 overflow-hidden hover:shadow-md transition"
+                className="card group flex flex-col overflow-hidden transition hover:rotate-0"
+                style={{ transform: `rotate(${i % 2 === 0 ? -0.7 : 0.6}deg)` }}
               >
                 <div
-                  className={`relative aspect-square w-full bg-gradient-to-br ${CARD_GRADIENTS[i % CARD_GRADIENTS.length]} flex items-center justify-center overflow-hidden`}
+                  className="relative aspect-square w-full flex items-center justify-center overflow-hidden border-b-2 border-[var(--ink-line)]"
+                  style={{ background: `color-mix(in srgb, ${CARD_TINTS[i % CARD_TINTS.length]} 16%, transparent)` }}
                 >
                   {c.thumbnailUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -52,22 +50,22 @@ export default async function BrowsePage() {
                       className="h-full w-full object-cover group-hover:scale-105 transition"
                     />
                   ) : (
-                    <p className="px-3 text-center text-sm italic text-black/60 dark:text-white line-clamp-4">
-                      &ldquo;{c.thumbnailText ?? c.prompt}&rdquo;
+                    <p className="font-display px-3 text-center text-xl leading-snug line-clamp-4">
+                      {c.thumbnailText ?? c.prompt}
                     </p>
                   )}
                   <span className="absolute top-1.5 left-1.5 flex gap-1">
-                    <span className="rounded-full bg-black/60 text-white text-[10px] px-2 py-0.5 backdrop-blur">
+                    <span className="tag bg-[#1c1b22] !text-white">
                       {TEMPLATE_LABELS[c.templateType]}
                     </span>
                     {c.purpose === "COLLECTING" && (
-                      <span className="rounded-full bg-orange-500/80 text-white text-[10px] px-2 py-0.5 backdrop-blur">
+                      <span className="tag bg-[#ff8a1f]">
                         collecting
                       </span>
                     )}
                   </span>
                   {c.isMine && (
-                    <span className="absolute top-1.5 right-1.5 rounded-full bg-orange-500 text-white text-[10px] px-2 py-0.5">
+                    <span className="tag absolute top-1.5 right-1.5 bg-[#ffc400]">
                       yours
                     </span>
                   )}

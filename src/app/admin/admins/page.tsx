@@ -25,7 +25,7 @@ export default async function AdminAdminsPage() {
 
       <p className="text-sm text-black/50 dark:text-white mb-4">
         Enter the username of an existing account to grant it full admin access (moderation,
-        posting without an account, and this page) — no password to share. They don&apos;t need
+        posting without an account, and this page), with no password to share. They don&apos;t need
         to do anything on their end; it takes effect on their next action.
       </p>
       <GrantAdminForm />
@@ -33,13 +33,13 @@ export default async function AdminAdminsPage() {
       <ul className="flex flex-col gap-2 mt-6">
         {admins.length === 0 ? (
           <p className="text-sm text-black/40 dark:text-white">
-            No account-based admins yet — only the shared ADMIN_PASSWORD.
+            No account-based admins yet, only the shared ADMIN_PASSWORD.
           </p>
         ) : (
           admins.map((a) => (
             <li
               key={a.id}
-              className="flex items-center justify-between rounded-lg border border-black/10 dark:border-white/15 px-3 py-2"
+              className="flex items-center justify-between card px-3 py-2"
             >
               <div>
                 <p className="text-sm font-medium">{a.displayName ?? a.username}</p>

@@ -29,7 +29,7 @@ export default function BuyButton({ modelId, price }: { modelId: string; price: 
       <button
         onClick={buy}
         disabled={busy}
-        className="rounded-full bg-orange-500 hover:bg-orange-600 px-6 py-2.5 font-semibold text-white disabled:opacity-40 active:scale-95 transition"
+        className="btn btn-orange px-6 py-2.5 font-semibold text-white disabled:opacity-40 active:scale-95 transition"
       >
         {busy ? "Buying…" : infinite ? "Get it free (infinite tokens active)" : `Buy for ${price} tokens`}
       </button>

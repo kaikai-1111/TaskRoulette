@@ -113,7 +113,7 @@ export default function SurveyCapture({ item, onSubmit }: CaptureProps) {
       {error && <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500">{error}</p>}
       <button
         onClick={submit}
-        className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-3 font-semibold text-white active:scale-95 transition"
+        className="btn px-6 py-3 font-semibold text-white active:scale-95 transition"
       >
         Submit
       </button>

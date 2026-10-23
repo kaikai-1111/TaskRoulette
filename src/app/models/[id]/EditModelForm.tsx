@@ -64,7 +64,7 @@ export default function EditModelForm({ model }: { model: ModelSummary }) {
       <button
         type="submit"
         disabled={busy}
-        className="self-start rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-5 py-2 font-semibold text-white disabled:opacity-40"
+        className="self-start btn px-5 py-2 font-semibold text-white disabled:opacity-40"
       >
         {busy ? "Saving…" : "Save"}
       </button>

@@ -28,9 +28,9 @@ export default function ImageSearch({ onAdd }: { onAdd: (urls: string[]) => void
       if (!res.ok) throw new Error(body.error ?? "Search failed");
       setResults(body.results);
       setCont(body.cont ?? null);
-      if (body.results.length === 0) setError("No results — try a different search.");
+      if (body.results.length === 0) setError("No results. Try a different search.");
     } catch {
-      setError("Search failed — try again.");
+      setError("Search failed. Try again.");
       setResults(null);
       setCont(null);
     }
@@ -52,7 +52,7 @@ export default function ImageSearch({ onAdd }: { onAdd: (urls: string[]) => void
       });
       setCont(body.cont ?? null);
     } catch {
-      setError("Couldn't load more — try again.");
+      setError("Couldn't load more. Try again.");
     }
     setLoadingMore(false);
   }
@@ -88,7 +88,7 @@ export default function ImageSearch({ onAdd }: { onAdd: (urls: string[]) => void
   }
 
   return (
-    <div className="rounded-lg border border-black/10 dark:border-white/15 p-3 flex flex-col gap-3">
+    <div className="card p-3 flex flex-col gap-3">
       {/* Not a <form> — this whole component nests inside the challenge
           form on /create, and HTML doesn't allow a form within a form. */}
       <div className="flex gap-2">
@@ -109,7 +109,7 @@ export default function ImageSearch({ onAdd }: { onAdd: (urls: string[]) => void
           type="button"
           onClick={handleSearch}
           disabled={searching || !query.trim()}
-          className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+          className="btn px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
         >
           {searching ? "Searching…" : "Search"}
         </button>
@@ -168,7 +168,7 @@ export default function ImageSearch({ onAdd }: { onAdd: (urls: string[]) => void
             type="button"
             onClick={addSelected}
             disabled={selected.size === 0}
-            className="self-start rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+            className="self-start btn px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
           >
             Add {selected.size || ""} selected
           </button>

@@ -16,7 +16,6 @@ export default function BanGate({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-      <p className="text-4xl">🔨</p>
       <p className="text-xl font-semibold">You&apos;ve been banned</p>
       {identity.banReason && (
         <p className="max-w-sm rounded-lg bg-black/5 dark:bg-white/10 px-4 py-3 text-sm">

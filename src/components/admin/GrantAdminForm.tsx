@@ -18,7 +18,7 @@ export default function GrantAdminForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+        className="btn px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
       >
         {pending ? "Adding…" : "Make admin"}
       </button>

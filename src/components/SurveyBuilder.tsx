@@ -91,7 +91,7 @@ export default function SurveyBuilder({
       {questions.map((q, i) => (
         <div
           key={q.id}
-          className="flex flex-col gap-2 rounded-lg border border-black/10 dark:border-white/15 p-3"
+          className="flex flex-col gap-2 card p-3"
         >
           <div className="flex items-center justify-between text-xs text-black/50 dark:text-white">
             <span className="font-semibold">Question {i + 1}</span>
@@ -182,7 +182,7 @@ export default function SurveyBuilder({
         <button
           type="button"
           onClick={() => onChange([...questions, newQuestion()])}
-          className="self-start rounded-full border border-black/10 dark:border-white/15 px-4 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+          className="self-start btn btn-ghost px-4 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
         >
           + Add question
         </button>

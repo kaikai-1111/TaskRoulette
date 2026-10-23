@@ -43,7 +43,7 @@ export default async function AdminPage() {
       ) : (
         <ul className="flex flex-col gap-4">
           {flags.map((flag) => (
-            <li key={flag.id} className="rounded-lg border border-black/10 dark:border-white/15 p-4">
+            <li key={flag.id} className="card p-4">
               <div className="flex items-center justify-between text-xs text-black/40 dark:text-white mb-2">
                 <span>{flag.targetType}</span>
                 <span>{new Date(flag.createdAt).toLocaleString()}</span>
@@ -83,7 +83,7 @@ export default async function AdminPage() {
 
               <div className="flex gap-2 text-sm">
                 <form action={resolveFlagAction.bind(null, flag.id)}>
-                  <button className="rounded-full border border-black/10 dark:border-white/15 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10">
+                  <button className="btn btn-ghost px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10">
                     Dismiss flag
                   </button>
                 </form>

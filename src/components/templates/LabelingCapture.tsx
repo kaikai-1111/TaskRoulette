@@ -32,7 +32,7 @@ export default function LabelingCapture({ item, onSubmit }: CaptureProps) {
             <button
               key={opt}
               onClick={() => onSubmit({ value: opt })}
-              className="rounded-full border border-black/10 dark:border-white/20 px-5 py-2.5 font-medium hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 active:scale-95 transition"
+              className="btn btn-ghost px-5 py-2.5 font-medium hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 active:scale-95 transition"
             >
               {opt}
             </button>
@@ -56,7 +56,7 @@ export default function LabelingCapture({ item, onSubmit }: CaptureProps) {
           <button
             type="submit"
             disabled={!text.trim()}
-            className="w-full rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
+            className="w-full btn px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
           >
             Submit
           </button>

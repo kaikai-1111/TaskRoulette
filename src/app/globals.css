@@ -5,14 +5,21 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --background: #fbf8f1; /* paper, not screen-white */
+  --foreground: #1c1b22;
+  --ink: #1c1b22;
+  --ink-line: rgba(28, 27, 34, 0.82);
+  --ink-shadow: rgba(28, 27, 34, 0.9);
+  --accent: #2f5bf5;
+  --accent-orange: #ff8a1f;
+  --card-bg: #fffdf8;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -21,6 +28,11 @@
   :root:not(.light) {
     --background: #0a1120;
     --foreground: #e2e8f0;
+    --ink: #e2e8f0;
+    --ink-line: rgba(226, 232, 240, 0.7);
+    --ink-shadow: rgba(226, 232, 240, 0.3);
+    --accent: #4b7bff;
+    --card-bg: transparent;
   }
 }
 
@@ -28,17 +40,27 @@
 :root.dark {
   --background: #0a1120;
   --foreground: #e2e8f0;
+  --ink: #e2e8f0;
+  --ink-line: rgba(226, 232, 240, 0.7);
+  --ink-shadow: rgba(226, 232, 240, 0.3);
+  --accent: #4b7bff;
+  --card-bg: transparent;
 }
 :root.light {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --background: #fbf8f1;
+  --foreground: #1c1b22;
+  --ink: #1c1b22;
+  --ink-line: rgba(28, 27, 34, 0.82);
+  --ink-shadow: rgba(28, 27, 34, 0.9);
+  --accent: #2f5bf5;
+  --card-bg: #fffdf8;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family:
-    var(--font-sans),
+    var(--font-body),
     -apple-system,
     BlinkMacSystemFont,
     "Segoe UI",
@@ -122,4 +144,106 @@ body {
     -webkit-mask-image: none;
     mask-image: none;
   }
+}
+
+
+/* ---- Hand-made UI pieces ------------------------------------------------
+   Headings are handwritten; buttons and cards look like stickers cut out with
+   scissors (marker outline, uneven corners, a hard offset shadow) instead of
+   the same soft rounded pill everywhere. */
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+h1 {
+  font-size: 1.9rem;
+  line-height: 1.15;
+}
+h2 {
+  font-size: 1.4rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  border: 2px solid var(--ink-line);
+  border-radius: 14px 11px 15px 10px;
+  box-shadow: 3px 3px 0 var(--ink-shadow);
+  transition: transform 80ms ease, box-shadow 80ms ease;
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--ink-shadow);
+}
+.btn:active:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--ink-shadow);
+}
+.btn:disabled {
+  box-shadow: none;
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-orange {
+  background: var(--accent-orange);
+  color: #1c1b22;
+}
+.btn-ghost {
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+  font-weight: 600;
+}
+.btn-ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: none;
+  transform: none;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 2px solid var(--ink-line);
+  border-radius: 12px 14px 11px 15px;
+}
+a.card:hover {
+  background: color-mix(in srgb, var(--ink) 5%, var(--card-bg));
+}
+
+/* A small hand-stuck label, like masking tape. */
+.tag {
+  display: inline-block;
+  border-radius: 4px 6px 4px 7px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1c1b22;
+}
+
+/* Text fields: marker outline with uneven corners, like the buttons. Unlayered
+   on purpose so it wins over the per-field Tailwind border classes. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]),
+textarea,
+select {
+  border: 2px solid var(--ink-line);
+  border-radius: 10px 8px 11px 9px;
+  background-color: var(--card-bg);
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent);
 }

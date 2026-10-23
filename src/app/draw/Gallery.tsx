@@ -48,7 +48,7 @@ export default function Gallery({ drawings }: { drawings: GalleryDrawing[] }) {
               {d.mine ? (
                 "Yours"
               ) : reported.has(d.id) ? (
-                "Reported — thanks"
+                "Reported, thanks"
               ) : (
                 <button onClick={() => report(d.id)} className="underline underline-offset-2 hover:text-red-500">
                   Report

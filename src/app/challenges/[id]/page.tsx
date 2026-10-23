@@ -66,7 +66,7 @@ export default async function ChallengeResultsPage({
       ) : (
       <div className="flex flex-col gap-4">
         {challenge.items.map((item) => (
-          <div key={item.id} className="rounded-lg border border-black/10 dark:border-white/15 p-4">
+          <div key={item.id} className="card p-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-black/50 dark:text-white truncate max-w-xs">
                 {item.mediaUrl ?? item.textContent}
@@ -189,7 +189,7 @@ function SurveyResults({ results, respondents }: { results: QuestionResult[]; re
       {results.map((r, i) => {
         const max = Math.max(1, ...(r.counts ?? []).map((c) => c.count));
         return (
-          <div key={r.question.id} className="rounded-lg border border-black/10 dark:border-white/15 p-4">
+          <div key={r.question.id} className="card p-4">
             <p className="font-medium text-sm">
               {i + 1}. {r.question.text}
             </p>

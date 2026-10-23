@@ -88,7 +88,7 @@ export default function VideoRecordingCapture({ item, onSubmit }: CaptureProps) 
       }, config.maxDurationSeconds * 1000);
     } catch {
       setErrorMsg(
-        "Couldn't access your camera — permission was denied or none is available. Use Skip below to move on."
+        "Couldn't access your camera (permission was denied, or there isn't one). Use Skip below to move on."
       );
       setStage("error");
     }
@@ -146,12 +146,12 @@ export default function VideoRecordingCapture({ item, onSubmit }: CaptureProps) 
               terms
             </a>
             . If you can, point the camera at what you&apos;re doing rather than your face. You must
-            be 13+ to continue — if you&apos;d rather not, use Skip below.
+            be 13+ to continue. If you&apos;d rather not, use Skip below.
           </p>
         </div>
         <button
           onClick={startRecording}
-          className="w-full rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-3 font-semibold text-white active:scale-95 transition"
+          className="w-full btn px-6 py-3 font-semibold text-white active:scale-95 transition"
         >
           Allow camera &amp; record
         </button>
@@ -183,7 +183,7 @@ export default function VideoRecordingCapture({ item, onSubmit }: CaptureProps) 
         </div>
         <button
           onClick={stopNow}
-          className="w-full rounded-full bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 font-semibold active:scale-95 transition"
+          className="w-full btn btn-orange text-white px-6 py-3 font-semibold active:scale-95 transition"
         >
           Stop now
         </button>
@@ -203,14 +203,14 @@ export default function VideoRecordingCapture({ item, onSubmit }: CaptureProps) 
           <button
             onClick={retake}
             disabled={stage === "uploading"}
-            className="flex-1 rounded-full border border-black/10 dark:border-white/20 px-4 py-3 font-medium disabled:opacity-30"
+            className="flex-1 btn btn-ghost px-4 py-3 font-medium disabled:opacity-30"
           >
             Retake
           </button>
           <button
             onClick={submit}
             disabled={stage === "uploading"}
-            className="flex-1 rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-3 font-semibold text-white disabled:opacity-30 active:scale-95 transition"
+            className="flex-1 btn px-4 py-3 font-semibold text-white disabled:opacity-30 active:scale-95 transition"
           >
             {stage === "uploading" ? "Uploading…" : "Submit"}
           </button>

@@ -9,7 +9,7 @@ export default function NavHeader() {
     <header className="flex items-center gap-3 border-b border-black/5 dark:border-white/10 px-4 py-3">
       <Link
         href="/"
-        className="shrink-0 font-bold tracking-tight text-blue-600 dark:text-orange-400 whitespace-nowrap"
+        className="font-display shrink-0 text-2xl leading-none text-blue-600 dark:text-orange-400 whitespace-nowrap"
       >
         Task Roulette
       </Link>

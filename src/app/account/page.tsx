@@ -170,7 +170,7 @@ export default function AccountPage() {
       setStatus((s) => (s ? { ...s, avatarUrl: body.url } : s));
       refreshIdentity();
     } catch (err) {
-      setAvatarError(err instanceof Error ? err.message : "Couldn't upload that photo — try again.");
+      setAvatarError(err instanceof Error ? err.message : "Couldn't upload that photo. Try again.");
     }
     setUploadingAvatar(false);
   }
@@ -293,7 +293,7 @@ export default function AccountPage() {
                   <button
                     type="submit"
                     disabled={savingName}
-                    className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+                    className="btn px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
                   >
                     {savingName ? "Saving…" : "Save"}
                   </button>
@@ -306,7 +306,7 @@ export default function AccountPage() {
                       setLastInput(status.lastName ?? "");
                       setNameError(null);
                     }}
-                    className="rounded-full border border-black/10 dark:border-white/15 px-4 py-1.5 text-sm"
+                    className="btn btn-ghost px-4 py-1.5 text-sm"
                   >
                     Cancel
                   </button>
@@ -361,7 +361,7 @@ export default function AccountPage() {
                   <button
                     type="submit"
                     disabled={savingEmail}
-                    className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+                    className="btn px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
                   >
                     {savingEmail ? "Saving…" : "Save email"}
                   </button>
@@ -373,7 +373,7 @@ export default function AccountPage() {
                       setEmailPassword("");
                       setEmailError(null);
                     }}
-                    className="rounded-full border border-black/10 dark:border-white/15 px-4 py-1.5 text-sm"
+                    className="btn btn-ghost px-4 py-1.5 text-sm"
                   >
                     Cancel
                   </button>
@@ -436,7 +436,7 @@ export default function AccountPage() {
                   <button
                     type="submit"
                     disabled={savingPassword}
-                    className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+                    className="btn px-4 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
                   >
                     {savingPassword ? "Saving…" : "Save"}
                   </button>
@@ -448,7 +448,7 @@ export default function AccountPage() {
                       setNewPasswordInput("");
                       setPasswordError(null);
                     }}
-                    className="rounded-full border border-black/10 dark:border-white/15 px-4 py-1.5 text-sm"
+                    className="btn btn-ghost px-4 py-1.5 text-sm"
                   >
                     Cancel
                   </button>
@@ -489,7 +489,7 @@ export default function AccountPage() {
             {deletingAccount ? (
               <form onSubmit={handleDeleteAccount} className="flex flex-col gap-2">
                 <p className="text-sm text-black/60 dark:text-white">
-                  This removes your username, email, password, display name, and photo — freeing
+                  This removes your username, email, password, display name, and photo, which frees
                   your username and email for reuse. Challenges you&apos;ve posted and responses
                   you&apos;ve given stay in place, same as any anonymous contribution. This device
                   signs out immediately; there&apos;s no undo.
@@ -522,7 +522,7 @@ export default function AccountPage() {
                       setDeletePasswordInput("");
                       setDeleteError(null);
                     }}
-                    className="rounded-full border border-black/10 dark:border-white/15 px-4 py-1.5 text-sm"
+                    className="btn btn-ghost px-4 py-1.5 text-sm"
                   >
                     Cancel
                   </button>

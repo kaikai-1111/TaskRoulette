@@ -97,7 +97,7 @@ export default function FreeformDrawingCapture({ item, onSubmit }: CaptureProps)
           type="button"
           onClick={undo}
           disabled={strokes.length === 0}
-          className="rounded-full border border-black/10 dark:border-white/20 px-4 py-1.5 disabled:opacity-30"
+          className="btn btn-ghost px-4 py-1.5 disabled:opacity-30"
         >
           Undo
         </button>
@@ -105,7 +105,7 @@ export default function FreeformDrawingCapture({ item, onSubmit }: CaptureProps)
           type="button"
           onClick={clear}
           disabled={strokes.length === 0}
-          className="rounded-full border border-black/10 dark:border-white/20 px-4 py-1.5 disabled:opacity-30"
+          className="btn btn-ghost px-4 py-1.5 disabled:opacity-30"
         >
           Clear
         </button>
@@ -113,7 +113,7 @@ export default function FreeformDrawingCapture({ item, onSubmit }: CaptureProps)
       <button
         onClick={submit}
         disabled={strokes.length === 0}
-        className="w-full max-w-xs rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
+        className="w-full max-w-xs btn px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
       >
         Submit drawing
       </button>

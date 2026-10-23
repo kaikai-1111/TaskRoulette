@@ -187,7 +187,7 @@ function CreatePageInner() {
     if (editId) {
       getMyChallengeForEdit(editId).then((c) => {
         if (!c) {
-          setSourceError("Can't edit this challenge — it may not be yours.");
+          setSourceError("Can't edit this challenge. It may not be yours.");
           setLoadingSource(false);
           return;
         }
@@ -200,7 +200,7 @@ function CreatePageInner() {
     } else if (remixId) {
       getRemixSource(remixId).then((src) => {
         if (!src) {
-          setSourceError("Can't remix that challenge right now — it may have been taken down.");
+          setSourceError("Can't remix that challenge right now. It may have been taken down.");
           setLoadingSource(false);
           return;
         }
@@ -365,7 +365,7 @@ function CreatePageInner() {
       <div className="mx-auto w-full max-w-sm px-4 py-8">
         <h1 className="text-2xl font-bold mb-1">Create an account to post</h1>
         <p className="text-sm text-black/50 dark:text-white mb-6">
-          Doing challenges never requires this — only posting one does, so there&apos;s a real
+          You don&apos;t need an account to do challenges, only to post one, so there&apos;s a real
           identity behind the data you collect.
         </p>
         <CreateAccountForm onCreated={() => setHasAccount(true)} />
@@ -380,7 +380,7 @@ function CreatePageInner() {
         <p className="text-sm text-black/50 dark:text-white mb-6">
           {fieldsLocked
             ? "This challenge already has responses, so its task type, prompt, config, and items are locked. Responses needed, time limit, and take-down stay editable."
-            : "No responses yet — everything below is still editable."}
+            : "No responses yet, so everything below is still editable."}
         </p>
       ) : (
         <p className="text-sm text-black/50 dark:text-white mb-6">
@@ -388,14 +388,14 @@ function CreatePageInner() {
           {isAdmin
             ? "Posting is free for admins."
             : infiniteCredits
-              ? "Infinite credits is active — posting is free right now."
+              ? "Infinite credits is on, so posting is free right now."
             : `Posting a challenge costs a flat ${ECONOMY.CHALLENGE_POST_COST} credits, no matter how many items or responses you ask for.`}
         </p>
       )}
 
       {remixedFromPrompt && (
         <div className="mb-5 rounded-lg bg-blue-500/10 border border-blue-500/20 px-3 py-2 text-xs text-black/60 dark:text-white">
-          Remixing &ldquo;{remixedFromPrompt}&rdquo; — edit anything below before posting your own copy.
+          Remixing &ldquo;{remixedFromPrompt}&rdquo;. Change anything below before you post your own copy.
         </div>
       )}
 
@@ -532,7 +532,7 @@ function CreatePageInner() {
         {templateType === "PHOTO_CAPTURE" && (
           <div className="rounded-lg bg-amber-400/10 border border-amber-400/30 px-3 py-2 text-xs text-black/60 dark:text-white">
             Doers see an explicit camera-consent screen before taking a photo, and can upload an
-            existing one instead. Each item below is a separate thing to photograph — doers submit
+            existing one instead. Each item below is a separate thing to photograph. Doers submit
             one photo per item, not a batch.
           </div>
         )}
@@ -632,7 +632,7 @@ function CreatePageInner() {
         ) : (
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium">
-              {usesImageItems ? "Images — upload files or paste URLs, one per line" : itemsCopy.label}
+              {usesImageItems ? "Images: upload files or paste URLs, one per line" : itemsCopy.label}
             </span>
             {usesImageItems && !fieldsLocked && (
               <div className="flex items-center gap-2">
@@ -684,7 +684,7 @@ function CreatePageInner() {
                 checked={noResponseLimit}
                 onChange={(e) => setNoResponseLimit(e.target.checked)}
               />
-              No limit — keep collecting until I take it down
+              No limit, keep collecting until I take it down
             </label>
           </label>
           <label className="flex flex-1 flex-col gap-1.5">
@@ -717,7 +717,7 @@ function CreatePageInner() {
             onChange={(e) => setCategory(e.target.checked ? "PRETRAINING" : "FUN")}
             className="disabled:opacity-50"
           />
-          This is for real data collection — training a model, research, etc. (vs. just for fun)
+          This is for real data collection (training a model, research, etc.), not just for fun
         </label>
 
         <fieldset disabled={fieldsLocked} className="flex flex-col gap-1.5 disabled:opacity-50">
@@ -768,7 +768,7 @@ function CreatePageInner() {
             (templateType === "SURVEY" ? questions.length === 0 : items.length === 0) ||
             (!editChallengeId && !canAfford)
           }
-          className="rounded-full bg-orange-500 hover:bg-orange-600 px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
+          className="btn btn-orange px-6 py-3 font-semibold text-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition"
         >
           {submitting
             ? editChallengeId

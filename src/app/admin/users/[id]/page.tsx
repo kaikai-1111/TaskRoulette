@@ -54,7 +54,7 @@ export default async function AdminUserDetailPage({
         <Detail label="Age attested" value={user.ageAttested ? "Yes" : "No"} />
       </dl>
 
-      <div className="mb-6 rounded-lg border border-black/10 dark:border-white/15 p-4">
+      <div className="mb-6 card p-4">
         {user.isBanned ? (
           <>
             <p className="text-sm font-semibold text-red-500">
@@ -67,7 +67,7 @@ export default async function AdminUserDetailPage({
             <form action={unbanUserAction.bind(null, user.id)} className="mt-3">
               <button
                 type="submit"
-                className="rounded-full border border-black/10 dark:border-white/15 px-4 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+                className="btn btn-ghost px-4 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/10"
               >
                 Lift ban
               </button>
@@ -75,7 +75,7 @@ export default async function AdminUserDetailPage({
           </>
         ) : user.isAdmin ? (
           <p className="text-sm text-black/50 dark:text-white">
-            Admins can&apos;t be banned — revoke admin access on the Admins page first.
+            Admins can&apos;t be banned. Revoke admin access on the Admins page first.
           </p>
         ) : (
           <>

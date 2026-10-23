@@ -17,7 +17,7 @@ export default async function ModelsPage() {
           </Link>
           <Link
             href="/models/new"
-            className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-2 font-semibold text-white"
+            className="btn px-4 py-2 font-semibold text-white"
           >
             Upload a model
           </Link>
@@ -28,14 +28,14 @@ export default async function ModelsPage() {
         doing challenges and claiming rewards), which go to whoever posted the model.
       </p>
       {models.length === 0 ? (
-        <p className="text-black/50 dark:text-white">No models yet — be the first to upload one.</p>
+        <p className="text-black/50 dark:text-white">No models yet. Upload the first one.</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {models.map((m) => (
             <li key={m.id}>
               <Link
                 href={`/models/${m.id}`}
-                className="block rounded-lg border border-black/10 dark:border-white/15 px-4 py-3 hover:bg-black/5 dark:hover:bg-white/5 transition"
+                className="block card px-4 py-3 hover:bg-black/5 dark:hover:bg-white/5 transition"
               >
                 <div className="flex items-start justify-between gap-3">
                   <span className="font-semibold break-words min-w-0">{m.name}</span>

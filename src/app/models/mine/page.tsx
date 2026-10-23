@@ -26,7 +26,7 @@ export default async function MyModelsPage() {
       ) : (
         <ul className="flex flex-col gap-3">
           {models.map((m) => (
-            <li key={m.id} className="rounded-lg border border-black/10 dark:border-white/15">
+            <li key={m.id} className="card">
               <Link
                 href={`/models/${m.id}`}
                 className="block px-4 pt-3 pb-2 hover:bg-black/5 dark:hover:bg-white/5 transition"

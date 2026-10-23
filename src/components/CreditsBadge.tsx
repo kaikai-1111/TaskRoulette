@@ -30,7 +30,7 @@ export default function CreditsBadge() {
     <Link
       href="/rewards"
       className="shrink-0 whitespace-nowrap text-sm font-medium text-black/60 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
-      title="Credits and tokens — open Rewards"
+      title="Credits and tokens. Open Rewards"
     >
       <span className={infC ? "text-orange-500 font-semibold" : ""}>{infC ? "∞" : (credits ?? "…")} credits</span>
       <span className="mx-1 text-black/30 dark:text-white/40">·</span>

@@ -25,7 +25,7 @@ export default async function MyChallengesPage() {
         <ul className="flex flex-col gap-3">
           {challenges.map((c) => {
             return (
-              <li key={c.id} className="rounded-lg border border-black/10 dark:border-white/15">
+              <li key={c.id} className="card">
                 <Link
                   href={`/challenges/${c.id}`}
                   className="block px-4 pt-3 pb-2 hover:bg-black/5 dark:hover:bg-white/5 transition"

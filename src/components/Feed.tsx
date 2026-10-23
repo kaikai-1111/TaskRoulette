@@ -123,19 +123,19 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
         <p className="text-black/50 dark:text-white">
           {targeted
             ? "It's already full, it's yours, or you've already answered it."
-            : "No open challenges right now — post one and be the first in line."}
+            : "No open challenges right now. Post one and be first."}
         </p>
         {targeted && (
           <button
             onClick={loadNext}
-            className="rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white px-6 py-3 font-semibold active:scale-95 transition"
+            className="btn text-white px-6 py-3 font-semibold active:scale-95 transition"
           >
             Browse the feed instead
           </button>
         )}
         <a
           href="/create"
-          className="rounded-full bg-orange-500 hover:bg-orange-600 px-6 py-3 font-semibold text-white active:scale-95 transition"
+          className="btn btn-orange px-6 py-3 font-semibold text-white active:scale-95 transition"
         >
           Post a challenge
         </a>
@@ -148,8 +148,7 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
     const pct = limited ? Math.round((feedback.itemResponseCount / feedback.targetResponsesPerItem) * 100) : 0;
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center px-6">
-        <p className="text-4xl">✅</p>
-        <p className="text-xl font-semibold">
+        <p className="font-display text-3xl">
           +{feedback.creditsEarned} credit · +{feedback.tokensEarned} token
         </p>
         <p className="text-black/50 dark:text-white">
@@ -157,10 +156,10 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
             ? `You're response #${feedback.itemResponseCount} of ${feedback.targetResponsesPerItem} on this one (${pct}% full)`
             : `You're response #${feedback.itemResponseCount} on this one`}
         </p>
-        {streak > 1 && <p className="text-sm text-orange-500 font-medium">🔥 {streak} in a row</p>}
+        {streak > 1 && <p className="text-sm text-orange-500 font-medium">{streak} in a row</p>}
         <button
           onClick={loadNext}
-          className="mt-2 rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 text-white px-6 py-3 font-semibold active:scale-95 transition"
+          className="mt-2 btn text-white px-6 py-3 font-semibold active:scale-95 transition"
         >
           Next
         </button>

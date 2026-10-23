@@ -45,7 +45,7 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
       setStage("ready");
     } catch {
       setErrorMsg(
-        "Couldn't access your camera — permission was denied or none is available. You can upload a photo instead, or use Skip below to move on."
+        "Couldn't access your camera (permission was denied, or there isn't one). You can upload a photo instead, or use Skip below to move on."
       );
       setStage("error");
     }
@@ -136,7 +136,7 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
-        className="w-full rounded-full border border-black/10 dark:border-white/20 px-6 py-3 font-medium active:scale-95 transition"
+        className="w-full btn btn-ghost px-6 py-3 font-medium active:scale-95 transition"
       >
         Upload a photo instead
       </button>
@@ -161,7 +161,7 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
         </div>
         <button
           onClick={startCamera}
-          className="w-full rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-3 font-semibold text-white active:scale-95 transition"
+          className="w-full btn px-6 py-3 font-semibold text-white active:scale-95 transition"
         >
           Allow camera &amp; take photo
         </button>
@@ -192,7 +192,7 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
         </div>
         <button
           onClick={takePhoto}
-          className="w-full rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-6 py-3 font-semibold text-white active:scale-95 transition"
+          className="w-full btn px-6 py-3 font-semibold text-white active:scale-95 transition"
         >
           Take photo
         </button>
@@ -213,14 +213,14 @@ export default function PhotoCaptureCapture({ item, onSubmit }: CaptureProps) {
           <button
             onClick={retake}
             disabled={stage === "uploading"}
-            className="flex-1 rounded-full border border-black/10 dark:border-white/20 px-4 py-3 font-medium disabled:opacity-30"
+            className="flex-1 btn btn-ghost px-4 py-3 font-medium disabled:opacity-30"
           >
             Retake
           </button>
           <button
             onClick={submit}
             disabled={stage === "uploading"}
-            className="flex-1 rounded-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 px-4 py-3 font-semibold text-white disabled:opacity-30 active:scale-95 transition"
+            className="flex-1 btn px-4 py-3 font-semibold text-white disabled:opacity-30 active:scale-95 transition"
           >
             {stage === "uploading" ? "Uploading…" : "Submit"}
           </button>
