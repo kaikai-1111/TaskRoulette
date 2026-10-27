@@ -142,7 +142,7 @@ export async function createAccount(input: {
       if (target.includes("username")) return { ok: false, error: "That username is taken." };
       if (target.includes("email")) return { ok: false, error: "That email is already registered." };
     }
-    return { ok: false, error: "Couldn't create the account — try again." };
+    return { ok: false, error: "Couldn't create the account. Try again." };
   }
 
   return { ok: true };
@@ -248,7 +248,7 @@ export async function changeEmail(
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
       return { ok: false, error: "That email is already registered." };
     }
-    return { ok: false, error: "Couldn't change the email — try again." };
+    return { ok: false, error: "Couldn't change the email. Try again." };
   }
   return { ok: true, email };
 }
@@ -297,7 +297,7 @@ export async function signInWithGoogle(
     const ticket = await client.verifyIdToken({ idToken, audience: clientId });
     payload = ticket.getPayload();
   } catch {
-    return { ok: false, error: "Couldn't verify that Google sign-in — try again." };
+    return { ok: false, error: "Couldn't verify that Google sign-in. Try again." };
   }
   if (!payload?.sub || !payload.email) {
     return { ok: false, error: "Google didn't return the expected account info." };
@@ -344,7 +344,7 @@ export async function signInWithGoogle(
         throw err;
       }
     }
-    if (!user) return { ok: false, error: "Couldn't create an account — try again." };
+    if (!user) return { ok: false, error: "Couldn't create an account. Try again." };
   }
 
   if (user.isBanned) return { ok: false, error: "This account has been banned." };

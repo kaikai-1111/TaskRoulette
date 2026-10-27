@@ -14,7 +14,7 @@ export async function getCurrentUser() {
   const token = cookieStore.get(ANON_COOKIE_NAME)?.value;
   if (!token) {
     throw new Error(
-      "Missing anon_token cookie — request bypassed middleware.ts"
+      "Missing anon_token cookie. Request bypassed middleware.ts"
     );
   }
 

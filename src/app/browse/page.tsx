@@ -14,14 +14,14 @@ export default async function BrowsePage() {
     <div className="mx-auto w-full max-w-5xl px-4 py-8">
       <h1 className="text-2xl font-bold mb-1">Top challenges</h1>
       <p className="text-sm text-black/50 dark:text-white mb-6">
-        The most-answered open challenges right now. Tap one to jump straight in.
+        Most answered first. Pick one and go.
       </p>
 
       {challenges.length === 0 ? (
         <p className="text-black/50 dark:text-white">
-          Nothing open yet.{" "}
+          Nothing here yet.{" "}
           <Link href="/create" className="text-blue-600 dark:text-blue-400 underline">
-            Post the first challenge
+            Post the first one
           </Link>
           .
         </p>

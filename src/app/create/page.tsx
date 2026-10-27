@@ -365,8 +365,7 @@ function CreatePageInner() {
       <div className="mx-auto w-full max-w-sm px-4 py-8">
         <h1 className="text-2xl font-bold mb-1">Create an account to post</h1>
         <p className="text-sm text-black/50 dark:text-white mb-6">
-          You don&apos;t need an account to do challenges, only to post one, so there&apos;s a real
-          identity behind the data you collect.
+          Answering is anonymous. Posting isn&apos;t, so there&apos;s a real person behind every task.
         </p>
         <CreateAccountForm onCreated={() => setHasAccount(true)} />
       </div>
@@ -475,7 +474,7 @@ function CreatePageInner() {
         {NEEDS_TARGET_LABEL.includes(templateType) && (
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium">
-              {templateType === "BOUNDING_BOX" ? "What should doers draw a box around?" : "What should doers tap on?"}
+              {templateType === "BOUNDING_BOX" ? "What should people draw a box around?" : "What should people tap on?"}
             </span>
             <input
               required
@@ -503,8 +502,8 @@ function CreatePageInner() {
 
         {templateType === "VIDEO_RECORDING" && (
           <div className="rounded-lg bg-amber-400/10 border border-amber-400/30 px-3 py-2 text-xs text-black/60 dark:text-white">
-            Doers see an explicit camera-consent screen before recording, and must confirm they&apos;re
-            13+ (on top of the site-wide age gate). Clips are hard-capped below.
+            People get a camera-consent screen before recording, and have to confirm they&apos;re 13 or
+            older (on top of the age check for the whole site). Clips have a hard length cap, set below.
           </div>
         )}
 
@@ -531,9 +530,9 @@ function CreatePageInner() {
 
         {templateType === "PHOTO_CAPTURE" && (
           <div className="rounded-lg bg-amber-400/10 border border-amber-400/30 px-3 py-2 text-xs text-black/60 dark:text-white">
-            Doers see an explicit camera-consent screen before taking a photo, and can upload an
-            existing one instead. Each item below is a separate thing to photograph. Doers submit
-            one photo per item, not a batch.
+            People get a camera-consent screen before taking a photo, and can upload one they already
+            have instead. Each item below is a separate thing to photograph, and people send one photo
+            per item.
           </div>
         )}
 
@@ -592,10 +591,10 @@ function CreatePageInner() {
                 checked={ratingAllowComment}
                 onChange={(e) => setRatingAllowComment(e.target.checked)}
               />
-              Let raters add a short comment
+              Let people add a short comment
             </label>
             <p className="text-xs text-black/40 dark:text-white">
-              Raters pick a whole number from {ratingMin || "?"} to {ratingMax || "?"}
+              People pick a whole number from {ratingMin || "?"} to {ratingMax || "?"}
               {Number(ratingMax) - Number(ratingMin) + 1 > 11 ? " using a slider." : "."}
             </p>
           </fieldset>
@@ -744,8 +743,8 @@ function CreatePageInner() {
           </div>
           <span className="text-xs text-black/40 dark:text-white">
             {purpose === "ANNOTATING"
-              ? "Doers label or mark up data you've already supplied."
-              : "Doers contribute new data (photos, video, ...) rather than annotate existing data."}
+              ? "People label or mark up data you already have."
+              : "People send you new data (photos, video, ...) instead of marking up what you have."}
           </span>
         </fieldset>
 

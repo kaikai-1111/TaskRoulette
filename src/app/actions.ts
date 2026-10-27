@@ -272,7 +272,7 @@ export async function submitAnswer(input: {
       return { ok: false, error: "You've already answered this one." };
     }
     console.error("submitAnswer failed:", err);
-    return { ok: false, error: "Something went wrong submitting that — try again." };
+    return { ok: false, error: "Something went wrong submitting that. Try again." };
   }
 
   revalidatePath("/create");

@@ -74,7 +74,7 @@ function validateSurveyConfig(config: unknown): SurveyConfig {
     const n = i + 1;
     const q = raw as Partial<SurveyQuestion>;
     const id = typeof q.id === "string" ? q.id.trim().slice(0, 40) : "";
-    if (!id || seen.has(id)) throw new ValidationError(`Question ${n} is malformed — reload and try again.`);
+    if (!id || seen.has(id)) throw new ValidationError(`Question ${n} is malformed. Reload and try again.`);
     seen.add(id);
     const text = typeof q.text === "string" ? q.text.trim() : "";
     if (!text) throw new ValidationError(`Question ${n} needs some text.`);
@@ -271,7 +271,7 @@ export function validateAnswer(
   if (templateType === "PHOTO_CAPTURE") {
     const a = answer as Partial<PhotoCaptureAnswer>;
     if (typeof a.mediaUrl !== "string" || !a.mediaUrl.trim()) {
-      throw new ValidationError("Photo didn't upload correctly — try again.");
+      throw new ValidationError("Photo didn't upload correctly. Try again.");
     }
     return { mediaUrl: a.mediaUrl };
   }
@@ -280,10 +280,10 @@ export function validateAnswer(
     const a = answer as Partial<VideoRecordingAnswer>;
     const videoConfig = config as VideoRecordingConfig;
     if (typeof a.mediaUrl !== "string" || !a.mediaUrl.trim()) {
-      throw new ValidationError("Recording didn't upload correctly — try again.");
+      throw new ValidationError("Recording didn't upload correctly. Try again.");
     }
     if (typeof a.durationMs !== "number" || !Number.isFinite(a.durationMs) || a.durationMs <= 0) {
-      throw new ValidationError("Recording had no duration — try again.");
+      throw new ValidationError("Recording had no duration. Try again.");
     }
     // +1.5s buffer for encoder/flush lag around the auto-stop timer.
     if (a.durationMs > videoConfig.maxDurationSeconds * 1000 + 1500) {

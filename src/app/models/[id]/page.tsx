@@ -27,8 +27,8 @@ export default async function ModelPage({ params }: { params: Promise<{ id: stri
       {PICKLE_FORMATS.has(m.format) && (
         <p className="mt-4 rounded-lg bg-orange-500/10 px-3 py-2 text-xs text-orange-700 dark:text-orange-300">
           Heads up: .{m.format} files are often Python pickles, which can run arbitrary code when you load them.
-          Only load models from people you trust, ideally in a sandbox or with a safe loader (e.g.{" "}
-          <code>torch.load(..., weights_only=True)</code>).
+          Only load ones from people you trust, in a sandbox if you can, or with{" "}
+          <code>torch.load(..., weights_only=True)</code>.
         </p>
       )}
 

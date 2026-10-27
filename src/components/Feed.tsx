@@ -118,19 +118,19 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center px-6">
         <p className="text-xl font-medium">
-          {targeted ? "Can't jump into that one." : "You're all caught up."}
+          {targeted ? "You can't answer that one." : "You've answered everything."}
         </p>
         <p className="text-black/50 dark:text-white">
           {targeted
-            ? "It's already full, it's yours, or you've already answered it."
-            : "No open challenges right now. Post one and be first."}
+            ? "It's full, it's yours, or you already answered it."
+            : "Nothing left to answer right now. Post a task and give the strangers something to do."}
         </p>
         {targeted && (
           <button
             onClick={loadNext}
             className="btn text-white px-6 py-3 font-semibold active:scale-95 transition"
           >
-            Browse the feed instead
+            Go to the feed
           </button>
         )}
         <a
@@ -153,8 +153,8 @@ export default function Feed({ initialChallengeId }: { initialChallengeId?: stri
         </p>
         <p className="text-black/50 dark:text-white">
           {limited
-            ? `You're response #${feedback.itemResponseCount} of ${feedback.targetResponsesPerItem} on this one (${pct}% full)`
-            : `You're response #${feedback.itemResponseCount} on this one`}
+            ? `Answer #${feedback.itemResponseCount} of ${feedback.targetResponsesPerItem} on this one (${pct}% full)`
+            : `Answer #${feedback.itemResponseCount} on this one`}
         </p>
         {streak > 1 && <p className="text-sm text-orange-500 font-medium">{streak} in a row</p>}
         <button

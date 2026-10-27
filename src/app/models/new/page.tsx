@@ -123,7 +123,7 @@ export default function NewModelPage() {
     <div className="mx-auto w-full max-w-lg px-4 py-8">
       <h1 className="text-2xl font-bold mb-2">Upload a model</h1>
       <p className="mb-6 text-sm text-black/50 dark:text-white">
-        .pth is the usual choice, but other formats are fine. Up to {formatBytes(maxBytes)}.
+        .pth is what most people use, but other formats are fine. {formatBytes(maxBytes)} max.
       </p>
       {configError ? (
         <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500">
@@ -154,8 +154,8 @@ export default function NewModelPage() {
           </label>
           {PICKLE_FORMATS.has(ext) && (
             <p className="rounded-lg bg-orange-500/10 px-3 py-2 text-xs text-orange-700 dark:text-orange-300">
-              .{ext} files are often Python pickles, which can run code when loaded. We never open uploads, but
-              people who download it will be warned. Consider .safetensors if you can.
+              .{ext} files are often Python pickles, and those can run code when you load them. We never open
+              uploads, but we&apos;ll warn anyone who downloads this one. .safetensors is safer if you can use it.
             </p>
           )}
           <label className="flex flex-col gap-1.5">
@@ -191,7 +191,7 @@ export default function NewModelPage() {
               className="rounded-lg border border-black/10 dark:border-white/15 bg-transparent px-3 py-2"
             />
             <span className="text-xs text-black/40 dark:text-white">
-              0 makes it free. Buyers pay once and keep it; the tokens go to you.
+              0 means free. Buyers pay once and keep it, and the tokens go to you.
             </span>
           </label>
           {error && (

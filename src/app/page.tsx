@@ -1,20 +1,20 @@
 import Link from "next/link";
 
-// The front door. Plain on purpose: it says what the site is and points people
-// at the three things they can do. Add sections where marked below.
+// The front door. Plain on purpose: what the site is, then the two ways to use
+// it. Add more sections where marked below.
 
 const STEPS = [
   {
-    title: "Answer",
-    body: "Each task takes a few seconds. Label an image, draw something, rate a picture, tap a spot, take a photo, or fill out a short survey.",
+    title: "Post a task",
+    body: "Say what you need: labels, drawings, ratings, photos, a short survey. Set how many answers you want. Posting costs 5 credits.",
   },
   {
-    title: "Earn",
-    body: "Every answer earns 1 credit and 1 token. There's also a daily reward, and sometimes a power-up.",
+    title: "Strangers answer it",
+    body: "Your task goes into a feed that people flip through, a few seconds each. You don't find them, pay them, or talk to them.",
   },
   {
-    title: "Post your own",
-    body: "Spend credits to post a challenge, then export what people send back as JSON, CSV or TSV. Use tokens to grab models other people have shared.",
+    title: "Take the data",
+    body: "Export it as JSON, CSV, TSV or JSON Lines. It comes from random people on the internet, so expect some of it to be junk and plan for that.",
   },
 ];
 
@@ -25,23 +25,27 @@ export default function HomePage() {
         Task Roulette
       </h1>
       <p className="mt-4 text-lg">
-        A feed of quick tasks, answered by real people. Do a few for fun, or post one when you
-        need data for a model, a study, or anything else.
+        Need a pile of labeled images, drawings, ratings or survey answers? Outsource it to random
+        people on the internet. Post a task, and strangers do it for you.
+      </p>
+      <p className="mt-3 text-lg">
+        Or be one of the strangers. Answer quick tasks, earn credits, and spend them on tasks of
+        your own.
       </p>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <Link href="/feed" className="btn px-6 py-3 text-lg">
-          Start answering
-        </Link>
         <Link href="/create" className="btn btn-orange px-6 py-3 text-lg">
-          Post a challenge
+          Post a task
+        </Link>
+        <Link href="/feed" className="btn px-6 py-3 text-lg">
+          Answer some
         </Link>
         <Link href="/browse" className="btn btn-ghost px-6 py-3 text-lg">
-          Browse challenges
+          See what&apos;s out there
         </Link>
       </div>
 
-      <h2 className="mt-14 mb-4">How it works</h2>
+      <h2 className="mt-14 mb-4">If you need data</h2>
       <ol className="grid gap-4 sm:grid-cols-3">
         {STEPS.map((s, i) => (
           <li key={s.title} className="card p-4">
@@ -53,10 +57,17 @@ export default function HomePage() {
         ))}
       </ol>
 
+      <h2 className="mt-12 mb-2">If you&apos;re just here to answer</h2>
+      <p>
+        Every answer earns you 1 credit and 1 token. There&apos;s a daily reward too, and now and then
+        a power-up. Credits pay for your own tasks. Tokens buy models other people uploaded.
+      </p>
+
       {/* Add more sections here: examples, screenshots, who it's for, FAQ. */}
 
       <p className="mt-14 text-sm text-black/50 dark:text-white">
-        No account needed to answer. Answers can be reused as training data, see the{" "}
+        You don&apos;t need an account to answer. What you submit can be reused as training data,
+        details are in the{" "}
         <Link href="/terms" className="underline">
           terms
         </Link>

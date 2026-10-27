@@ -18,42 +18,42 @@ export const TEMPLATE_TYPES: { value: TemplateType; label: string; blurb: string
   {
     value: "BOUNDING_BOX",
     label: "Bounding box",
-    blurb: "Doer draws a rectangle around something in an image.",
+    blurb: "People draw a box around something in an image.",
   },
   {
     value: "POINT",
     label: "Find the spot",
-    blurb: "Doer taps a single point on something in an image.",
+    blurb: "People tap one spot on something in an image.",
   },
   {
     value: "LABELING",
     label: "Labeling",
-    blurb: "Doer picks an option (or types a short answer) for an image or text prompt.",
+    blurb: "People pick an option, or type a short answer, for an image or a line of text.",
   },
   {
     value: "FREEFORM_DRAWING",
     label: "Draw it",
-    blurb: "Doer gets a blank canvas and draws whatever the prompt says.",
+    blurb: "People get a blank canvas and draw whatever the prompt says.",
   },
   {
     value: "VIDEO_RECORDING",
     label: "Record it",
-    blurb: "Doer records a few seconds of video on their camera. Requires camera consent, 13+.",
+    blurb: "People record a few seconds of video on their camera. Needs camera consent, 13+.",
   },
   {
     value: "PHOTO_CAPTURE",
     label: "Take a picture",
-    blurb: "Doer takes a photo on their camera or uploads one. For collecting new data rather than annotating existing data.",
+    blurb: "People take a photo or upload one. For collecting new data instead of marking up what you have.",
   },
   {
     value: "SURVEY",
     label: "Survey",
-    blurb: "Doers answer a set of questions you write — multiple choice, ratings, or free text. For opinions and data of any kind.",
+    blurb: "People answer a set of questions you write: multiple choice, ratings, or free text. Good for opinions and anything else you want to ask.",
   },
   {
     value: "RATING",
     label: "Rate it",
-    blurb: "Doers rate each image or text on a scale you set, like 1–10, with optional labels and a comment.",
+    blurb: "People rate each image or line of text on a scale you set, like 1 to 10, with optional labels and a comment.",
   },
 ];
 

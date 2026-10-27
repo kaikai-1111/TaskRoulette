@@ -95,7 +95,7 @@ export default function DrawTool() {
         return;
       }
       window.dispatchEvent(new CustomEvent(DRAWING_ADDED_EVENT, { detail: result.drawing }));
-      setMessage({ kind: "ok", text: "It's on the wall! It'll float around the background until midnight UTC." });
+      setMessage({ kind: "ok", text: "Done. It's floating around the background now, until midnight UTC." });
       setStrokes([]);
       setStartedAt(null);
       setRemaining(DRAWING.SECONDS);

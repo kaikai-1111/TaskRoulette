@@ -92,8 +92,8 @@ export default function RewardsPage() {
       <div>
         <h1 className="text-2xl font-bold mb-1">Rewards</h1>
         <p className="text-sm text-black/50 dark:text-white">
-          You have {status.credits} credits and {status.tokens} tokens. Every answer you give earns{" "}
-          1 of each. Tokens unlock paid models.
+          You have {status.credits} credits and {status.tokens} tokens. Every answer earns 1 of each.
+          Credits pay for posting your own tasks. Tokens buy models.
         </p>
       </div>
 
@@ -112,11 +112,11 @@ export default function RewardsPage() {
         {status.canClaim ? (
           <>
             <p className="text-sm text-black/60 dark:text-white">
-              Today&apos;s award:{" "}
+              Today&apos;s reward:{" "}
               <span className="font-semibold">
                 +{status.nextAmount} {status.nextKind === "TOKENS" ? "tokens" : "credits"}
               </span>
-              . There&apos;s also a small chance of a bonus power-up.
+              . Small chance of a bonus power-up too.
             </p>
             <button
               onClick={handleClaim}
@@ -128,7 +128,7 @@ export default function RewardsPage() {
           </>
         ) : (
           <p className="text-sm text-black/60 dark:text-white">
-            Claimed for today. Next award in{" "}
+            Already claimed today. Next one in{" "}
             <span className="font-mono font-semibold">{countdown(status.nextClaimAt - now)}</span>:{" "}
             <span className="font-semibold">
               +{status.nextAmount} {status.nextKind === "TOKENS" ? "tokens" : "credits"}

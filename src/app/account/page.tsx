@@ -189,8 +189,8 @@ export default function AccountPage() {
       {!status.hasAccount ? (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-black/60 dark:text-white">
-            Doing challenges never requires an account. Create one if you want to post
-            challenges, or to carry your credits to another device.
+            You don&apos;t need an account to answer tasks. You need one to post your own, or to keep your
+            credits when you switch devices.
           </p>
           <CreateAccountForm
             onCreated={() => {

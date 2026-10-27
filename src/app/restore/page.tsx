@@ -40,8 +40,8 @@ export default function RestorePage() {
     <div className="mx-auto w-full max-w-sm px-4 py-8">
       <h1 className="text-2xl font-bold mb-1">Sign in</h1>
       <p className="text-sm text-black/50 dark:text-white mb-6">
-        Bring a claimed account&apos;s credits to this device. This replaces this browser&apos;s
-        current credit balance.
+        Sign in to use your account&apos;s credits on this device. This replaces the balance this
+        browser has now.
       </p>
 
       {!!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (

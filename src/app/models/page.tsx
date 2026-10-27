@@ -24,8 +24,8 @@ export default async function ModelsPage() {
         </div>
       </div>
       <p className="mb-6 text-sm text-black/50 dark:text-white">
-        Models shared by the community. Free ones you can download any time; paid ones cost tokens (earned by
-        doing challenges and claiming rewards), which go to whoever posted the model.
+        Models other people uploaded. Free ones are free. Paid ones cost tokens, which you get by answering tasks
+        and claiming rewards, and the tokens go to whoever uploaded the model.
       </p>
       {models.length === 0 ? (
         <p className="text-black/50 dark:text-white">No models yet. Upload the first one.</p>
