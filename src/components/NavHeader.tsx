@@ -14,7 +14,7 @@ export default function NavHeader() {
         Task Roulette
       </Link>
       <nav className="hidden sm:flex flex-1 items-center gap-4 text-sm font-medium whitespace-nowrap text-black/60 dark:text-white">
-        <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400">
+        <Link href="/feed" className="hover:text-blue-600 dark:hover:text-blue-400">
           Feed
         </Link>
         <Link href="/browse" className="hover:text-blue-600 dark:hover:text-blue-400">

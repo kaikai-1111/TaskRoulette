@@ -20,7 +20,7 @@ export default function NameGate({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const bypass = pathname?.startsWith("/admin") || pathname === "/terms";
+  const bypass = pathname?.startsWith("/admin") || pathname === "/terms" || pathname === "/";
   if (bypass) return <>{children}</>;
   if (identity === null) return <div className="flex flex-1" />;
   if (!identity.hasAccount || identity.hasName) return <>{children}</>;

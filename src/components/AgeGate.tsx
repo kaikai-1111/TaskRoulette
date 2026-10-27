@@ -11,7 +11,8 @@ export default function AgeGate({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const bypass = pathname?.startsWith("/admin") || pathname === "/terms";
+  // The homepage is just information, so a first-time visitor can read it before agreeing.
+  const bypass = pathname?.startsWith("/admin") || pathname === "/terms" || pathname === "/";
 
   useEffect(() => {
     if (bypass) return;
